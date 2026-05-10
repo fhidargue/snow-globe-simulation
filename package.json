@@ -16,8 +16,10 @@
     "gl-matrix": "^3.4.4",
     "leva": "^0.10.1",
     "postprocessing": "^6.39.1",
+    "r3f-perf": "^7.2.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "sass": "^1.99.0",
     "three": "^0.184.0",
     "zustand": "^5.0.13"
   },
@@ -34,6 +36,7 @@
     "globals": "^17.5.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
-    "vite": "^8.0.10"
+    "vite": "^8.0.10",
+    "vite-tsconfig-paths": "^6.1.1"
   }
 }
