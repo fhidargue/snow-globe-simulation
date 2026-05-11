@@ -48,7 +48,7 @@ export default function SnowParticles() {
       castShadow
       receiveShadow
     >
-      <sphereGeometry args={[1, 8, 8]} />
+      <sphereGeometry args={[2, 10, 10]} />
       <meshStandardMaterial color="white" roughness={0.35} metalness={0.05} />
     </instancedMesh>
   );
