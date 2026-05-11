@@ -6,15 +6,11 @@ const Globe = () => {
         <meshPhysicalMaterial
           transmission={1}
           roughness={0.02}
-          thickness={0.18}
-          transparent
-          opacity={1}
-          ior={1.45}
-          reflectivity={0.9}
-          metalness={0}
+          thickness={0.25}
+          ior={1.52}
           clearcoat={1}
           clearcoatRoughness={0}
-          envMapIntensity={0.35}
+          envMapIntensity={1.5}
         />
       </mesh>
     </>

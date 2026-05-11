@@ -15,8 +15,17 @@ export default function ControlsPanel() {
   const materialType = useSimulationConfig((state) => state.materialType);
   const setMaterialType = useSimulationConfig((state) => state.setMaterialType);
 
+  const background = useSimulationConfig((state) => state.background);
+  const setBackground = useSimulationConfig((state) => state.setBackground);
+
+  const backgroundScene = useSimulationConfig((state) => state.backgroundScene);
+  const setBackgroundScene = useSimulationConfig(
+    (state) => state.setBackgroundScene,
+  );
+
   const controls = useControls({
     gravity: {
+      label: "Gravity",
       value: gravity,
       min: 0,
       max: 20,
@@ -24,6 +33,7 @@ export default function ControlsPanel() {
     },
 
     snowCount: {
+      label: "Snow Count",
       value: snowCount,
       min: 100,
       max: 10000,
@@ -31,6 +41,7 @@ export default function ControlsPanel() {
     },
 
     particleSize: {
+      label: "Particle Size",
       value: particleSize,
       min: 0,
       max: 3,
@@ -38,8 +49,26 @@ export default function ControlsPanel() {
     },
 
     materialType: {
+      label: "Material Type",
       value: materialType,
-      options: ["snow", "marble"],
+      options: {
+        Snow: "snow",
+        Marble: "marble",
+      },
+    },
+
+    backgroundScene: {
+      label: "Scene",
+      value: backgroundScene,
+      options: {
+        "Christmas Studio": "/hdr/christmas_studio.hdr",
+        "Snowy Forest": "/hdr/snowy_forest.hdr",
+      },
+    },
+
+    background: {
+      label: "Background",
+      value: background,
     },
   });
 
@@ -48,15 +77,21 @@ export default function ControlsPanel() {
     setSnowCount(controls.snowCount);
     setParticleSize(controls.particleSize);
     setMaterialType(controls.materialType as "snow" | "marble");
+    setBackground(controls.background);
+    setBackgroundScene(controls.backgroundScene);
   }, [
     controls.gravity,
     controls.snowCount,
     controls.particleSize,
     controls.materialType,
+    controls.background,
+    controls.backgroundScene,
     setGravity,
     setSnowCount,
     setParticleSize,
     setMaterialType,
+    setBackground,
+    setBackgroundScene,
   ]);
 
   return null;
