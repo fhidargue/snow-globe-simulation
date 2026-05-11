@@ -5,21 +5,22 @@ import { GLOBE_RADIUS, GRID_CELL_SIZE, PARTICLE_RADIUS } from "../constants";
 import { useSimulationStore } from "../simulationStore";
 import { useSimulationConfig } from "../simulationConfig";
 
-const SUBSTEPS = 2;
-const SOLVER_ITERATIONS = 2;
+const SUBSTEPS = 1;
+const SOLVER_ITERATIONS = 1;
 const STATIC_FRICTION_THRESHOLD = 0.000002;
 const DYNAMIC_FRICTION = 0.9985;
 const BOX_FRICTION = 0.92;
 const SLEEP_DELAY = 20;
-const NEIGHBOR_OFFSETS = [
-  [0, 0, 0],
-  [1, 0, 0],
-  [-1, 0, 0],
-  [0, 1, 0],
-  [0, -1, 0],
-  [0, 0, 1],
-  [0, 0, -1],
-];
+
+const NEIGHBOR_OFFSETS: number[][] = [];
+
+for (let x = -1; x <= 1; x++) {
+  for (let y = -1; y <= 1; y++) {
+    for (let z = -1; z <= 1; z++) {
+      NEIGHBOR_OFFSETS.push([x, y, z]);
+    }
+  }
+}
 
 export class PBDSystem {
   count: number;
@@ -27,6 +28,7 @@ export class PBDSystem {
   previousPositions: Float32Array;
   sleeping: Uint8Array;
   sizes: Float32Array;
+
   spatialHash = new Map<number, number[]>();
 
   private gravityVector = new THREE.Vector3();
@@ -78,6 +80,7 @@ export class PBDSystem {
 
       if (!bucket) {
         bucket = [];
+
         this.spatialHash.set(hash, bucket);
       }
 
@@ -108,6 +111,7 @@ export class PBDSystem {
     const gravityStrength = useSimulationConfig.getState().gravity;
 
     this.inverseQuaternion.copy(globeQuaternion).invert();
+
     this.gravityVector
       .set(0, -gravityStrength, 0)
       .applyQuaternion(this.inverseQuaternion);
@@ -164,16 +168,16 @@ export class PBDSystem {
         const i = particles[a]!;
         const indexA = i * 3;
 
-        const px = this.positions[indexA]!;
-        const py = this.positions[indexA + 1]!;
-        const pz = this.positions[indexA + 2]!;
-
-        const cx = Math.floor(px / GRID_CELL_SIZE);
-        const cy = Math.floor(py / GRID_CELL_SIZE);
-        const cz = Math.floor(pz / GRID_CELL_SIZE);
-
         for (let n = 0; n < NEIGHBOR_OFFSETS.length; n++) {
           const offset = NEIGHBOR_OFFSETS[n]!;
+
+          const px = this.positions[indexA]!;
+          const py = this.positions[indexA + 1]!;
+          const pz = this.positions[indexA + 2]!;
+
+          const cx = Math.floor(px / GRID_CELL_SIZE);
+          const cy = Math.floor(py / GRID_CELL_SIZE);
+          const cz = Math.floor(pz / GRID_CELL_SIZE);
 
           const hash = this.hashCell(
             cx + offset[0]!,
@@ -198,9 +202,8 @@ export class PBDSystem {
 
             const distSq = dx * dx + dy * dy + dz * dz;
 
-            if (distSq <= 0 || distSq > minDistanceSq) continue;
-
             const dist = Math.sqrt(distSq);
+
             const invDist = 1 / dist;
 
             const nx = dx * invDist;
@@ -208,6 +211,9 @@ export class PBDSystem {
             const nz = dz * invDist;
 
             const penetration = minDistance - dist;
+
+            if (penetration < 0.0015) continue;
+            if (distSq <= 0 || distSq > minDistanceSq) continue;
 
             const stiffness = 0.18;
 
@@ -227,7 +233,8 @@ export class PBDSystem {
   }
 
   solveGlobeCollision() {
-    const radius = GLOBE_RADIUS - PARTICLE_RADIUS;
+    const collisionSlop = 0.003;
+    const radius = GLOBE_RADIUS - PARTICLE_RADIUS - collisionSlop;
     const radiusSq = radius * radius;
 
     for (let i = 0; i < this.count; i++) {
@@ -238,8 +245,6 @@ export class PBDSystem {
       let z = this.positions[index + 2]!;
 
       const distanceSq = x * x + y * y + z * z;
-
-      if (distanceSq < radiusSq * 0.7) continue;
 
       if (distanceSq > radiusSq) {
         const distance = Math.sqrt(distanceSq);
@@ -262,13 +267,35 @@ export class PBDSystem {
 
         const normalVelocity = vx * nx + vy * ny + vz * nz;
 
-        vx -= nx * normalVelocity;
-        vy -= ny * normalVelocity;
-        vz -= nz * normalVelocity;
+        if (normalVelocity > 0) {
+          vx -= nx * normalVelocity;
+          vy -= ny * normalVelocity;
+          vz -= nz * normalVelocity;
+        }
+
+        const tangentScale = 1.002;
+
+        vx *= tangentScale;
+        vy *= tangentScale;
+        vz *= tangentScale;
 
         vx *= DYNAMIC_FRICTION;
         vy *= DYNAMIC_FRICTION;
         vz *= DYNAMIC_FRICTION;
+
+        const speedSq = vx * vx + vy * vy + vz * vz;
+
+        const maxSpeed = 0.12;
+
+        if (speedSq > maxSpeed * maxSpeed) {
+          const speed = Math.sqrt(speedSq);
+
+          const scale = maxSpeed / speed;
+
+          vx *= scale;
+          vy *= scale;
+          vz *= scale;
+        }
 
         this.previousPositions[index]! = x - vx;
         this.previousPositions[index + 1]! = y - vy;
@@ -281,6 +308,7 @@ export class PBDSystem {
     const boxMinX = -0.6;
     const boxMinY = -2.3;
     const boxMinZ = -0.6;
+
     const boxMaxX = 0.6;
     const boxMaxY = -1.2;
     const boxMaxZ = 0.6;
@@ -316,27 +344,27 @@ export class PBDSystem {
       let nz = 0;
 
       if (minDistance === left) {
-        x = boxMinX - PARTICLE_RADIUS;
+        x = boxMinX - PARTICLE_RADIUS + 0.003;
 
         nx = -1;
       } else if (minDistance === right) {
-        x = boxMaxX + PARTICLE_RADIUS;
+        x = boxMaxX + PARTICLE_RADIUS + 0.003;
 
         nx = 1;
       } else if (minDistance === bottom) {
-        y = boxMinY - PARTICLE_RADIUS;
+        y = boxMinY - PARTICLE_RADIUS + 0.003;
 
         ny = -1;
       } else if (minDistance === top) {
-        y = boxMaxY + PARTICLE_RADIUS;
+        y = boxMaxY + PARTICLE_RADIUS + 0.003;
 
         ny = 1;
       } else if (minDistance === back) {
-        z = boxMinZ - PARTICLE_RADIUS;
+        z = boxMinZ - PARTICLE_RADIUS + 0.003;
 
         nz = -1;
       } else {
-        z = boxMaxZ + PARTICLE_RADIUS;
+        z = boxMaxZ + PARTICLE_RADIUS + 0.003;
 
         nz = 1;
       }
@@ -351,9 +379,11 @@ export class PBDSystem {
 
       const normalVelocity = vx * nx + vy * ny + vz * nz;
 
-      vx -= nx * normalVelocity;
-      vy -= ny * normalVelocity;
-      vz -= nz * normalVelocity;
+      if (normalVelocity > 0) {
+        vx -= nx * normalVelocity;
+        vy -= ny * normalVelocity;
+        vz -= nz * normalVelocity;
+      }
 
       vx *= BOX_FRICTION;
       vy *= BOX_FRICTION;
