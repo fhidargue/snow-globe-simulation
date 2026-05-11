@@ -9,9 +9,11 @@ const SUBSTEPS = 1;
 const SOLVER_ITERATIONS = 1;
 const STATIC_FRICTION_THRESHOLD = 0.000002;
 const DYNAMIC_FRICTION = 0.9985;
-const BOX_FRICTION = 0.92;
+const BOX_FRICTION = 0.78;
 const SLEEP_DELAY = 20;
-
+const WAKE_DISTANCE = PARTICLE_RADIUS * 1.5;
+const WAKE_DISTANCE_SQ = WAKE_DISTANCE * WAKE_DISTANCE;
+const INV_GRID_CELL_SIZE = 1 / GRID_CELL_SIZE;
 const NEIGHBOR_OFFSETS: number[][] = [];
 
 for (let x = -1; x <= 1; x++) {
@@ -29,7 +31,14 @@ export class PBDSystem {
   sleeping: Uint8Array;
   sizes: Float32Array;
 
-  spatialHash = new Map<number, number[]>();
+  gridSize = 50000;
+  cellCounts: Int32Array;
+  cellOffsets: Int32Array;
+  cellEntries: Int32Array;
+
+  cellX: Int32Array;
+  cellY: Int32Array;
+  cellZ: Int32Array;
 
   private gravityVector = new THREE.Vector3();
   private inverseQuaternion = new THREE.Quaternion();
@@ -40,6 +49,12 @@ export class PBDSystem {
     this.previousPositions = new Float32Array(count * 3);
     this.sleeping = new Uint8Array(count);
     this.sizes = new Float32Array(count);
+    this.cellCounts = new Int32Array(this.gridSize);
+    this.cellOffsets = new Int32Array(this.gridSize);
+    this.cellEntries = new Int32Array(count);
+    this.cellX = new Int32Array(count);
+    this.cellY = new Int32Array(count);
+    this.cellZ = new Int32Array(count);
 
     for (let i = 0; i < count; i++) {
       const index = i * 3;
@@ -65,31 +80,50 @@ export class PBDSystem {
   }
 
   buildSpatialHash() {
-    this.spatialHash.clear();
+    this.cellCounts.fill(0);
 
     for (let i = 0; i < this.count; i++) {
       const index = i * 3;
 
-      const x = Math.floor(this.positions[index]! / GRID_CELL_SIZE);
-      const y = Math.floor(this.positions[index + 1]! / GRID_CELL_SIZE);
-      const z = Math.floor(this.positions[index + 2]! / GRID_CELL_SIZE);
+      const x = Math.floor(this.positions[index]! * INV_GRID_CELL_SIZE);
+      const y = Math.floor(this.positions[index + 1]! * INV_GRID_CELL_SIZE);
+      const z = Math.floor(this.positions[index + 2]! * INV_GRID_CELL_SIZE);
 
-      const hash = this.hashCell(x, y, z);
+      this.cellX[i]! = x;
+      this.cellY[i]! = y;
+      this.cellZ[i]! = z;
 
-      let bucket = this.spatialHash.get(hash);
+      const hash = this.hashCell(x, y, z) % this.gridSize;
 
-      if (!bucket) {
-        bucket = [];
+      this.cellCounts[hash]!++;
+    }
 
-        this.spatialHash.set(hash, bucket);
-      }
+    let total = 0;
 
-      bucket.push(i);
+    for (let i = 0; i < this.gridSize; i++) {
+      this.cellOffsets[i]! = total;
+
+      total += this.cellCounts[i]!;
+    }
+
+    const offsets = new Int32Array(this.cellOffsets);
+
+    for (let i = 0; i < this.count; i++) {
+      const hash =
+        this.hashCell(this.cellX[i]!, this.cellY[i]!, this.cellZ[i]!) %
+        this.gridSize;
+
+      const offset = offsets[hash]!;
+
+      this.cellEntries[offset]! = i;
+
+      offsets[hash]!++;
     }
   }
 
   update(delta: number) {
     const clampedDelta = Math.min(delta, 1 / 30);
+
     const subDelta = clampedDelta / SUBSTEPS;
 
     for (let step = 0; step < SUBSTEPS; step++) {
@@ -137,7 +171,17 @@ export class PBDSystem {
         this.sleeping[i]!++;
 
         if (this.sleeping[i]! > SLEEP_DELAY) {
-          continue;
+          const dx = px - this.previousPositions[index]!;
+          const dy = py - this.previousPositions[index + 1]!;
+          const dz = pz - this.previousPositions[index + 2]!;
+
+          const motionSq = dx * dx + dy * dy + dz * dz;
+
+          if (motionSq < WAKE_DISTANCE_SQ) {
+            continue;
+          }
+
+          this.sleeping[i] = 0;
         }
       } else {
         this.sleeping[i]! = 0;
@@ -161,79 +205,73 @@ export class PBDSystem {
     const minDistance = PARTICLE_RADIUS * 2;
     const minDistanceSq = minDistance * minDistance;
 
-    for (const [, particles] of this.spatialHash) {
-      const length = particles.length;
+    const stiffness = 0.18;
 
-      for (let a = 0; a < length; a++) {
-        const i = particles[a]!;
-        const indexA = i * 3;
+    for (let i = 0; i < this.count; i++) {
+      const indexA = i * 3;
 
-        for (let n = 0; n < NEIGHBOR_OFFSETS.length; n++) {
-          const offset = NEIGHBOR_OFFSETS[n]!;
+      const px = this.positions[indexA]!;
+      const py = this.positions[indexA + 1]!;
+      const pz = this.positions[indexA + 2]!;
 
-          const px = this.positions[indexA]!;
-          const py = this.positions[indexA + 1]!;
-          const pz = this.positions[indexA + 2]!;
+      const cx = this.cellX[i]!;
+      const cy = this.cellY[i]!;
+      const cz = this.cellZ[i]!;
 
-          const cx = Math.floor(px / GRID_CELL_SIZE);
-          const cy = Math.floor(py / GRID_CELL_SIZE);
-          const cz = Math.floor(pz / GRID_CELL_SIZE);
+      for (let n = 0; n < NEIGHBOR_OFFSETS.length; n++) {
+        const offset = NEIGHBOR_OFFSETS[n]!;
 
-          const hash = this.hashCell(
-            cx + offset[0]!,
-            cy + offset[1]!,
-            cz + offset[2]!,
-          );
+        const hash =
+          this.hashCell(cx + offset[0]!, cy + offset[1]!, cz + offset[2]!) %
+          this.gridSize;
 
-          const neighbors = this.spatialHash.get(hash);
+        const start = this.cellOffsets[hash]!;
+        const count = this.cellCounts[hash]!;
+        const end = start + count;
 
-          if (!neighbors) continue;
+        for (let k = start; k < end; k++) {
+          const j = this.cellEntries[k]!;
 
-          for (let b = 0; b < neighbors.length; b++) {
-            const j = neighbors[b]!;
+          if (i >= j) continue;
+          const indexB = j * 3;
 
-            if (i >= j) continue;
+          const dx = px - this.positions[indexB]!;
+          const dy = py - this.positions[indexB + 1]!;
+          const dz = pz - this.positions[indexB + 2]!;
 
-            const indexB = j * 3;
+          const distSq = dx * dx + dy * dy + dz * dz;
+          const dist = Math.sqrt(distSq);
 
-            const dx = px - this.positions[indexB]!;
-            const dy = py - this.positions[indexB + 1]!;
-            const dz = pz - this.positions[indexB + 2]!;
+          const penetration = minDistance - dist;
 
-            const distSq = dx * dx + dy * dy + dz * dz;
+          if (penetration < 0.0015) continue;
+          if (distSq <= 0 || distSq > minDistanceSq) continue;
 
-            const dist = Math.sqrt(distSq);
+          const invDist = 1 / dist;
 
-            const invDist = 1 / dist;
+          const nx = dx * invDist;
+          const ny = dy * invDist;
+          const nz = dz * invDist;
 
-            const nx = dx * invDist;
-            const ny = dy * invDist;
-            const nz = dz * invDist;
+          const correction = penetration * stiffness * 0.5;
 
-            const penetration = minDistance - dist;
+          this.positions[indexA]! += nx * correction;
+          this.positions[indexA + 1]! += ny * correction;
+          this.positions[indexA + 2]! += nz * correction;
 
-            if (penetration < 0.0015) continue;
-            if (distSq <= 0 || distSq > minDistanceSq) continue;
+          this.positions[indexB]! -= nx * correction;
+          this.positions[indexB + 1]! -= ny * correction;
+          this.positions[indexB + 2]! -= nz * correction;
 
-            const stiffness = 0.18;
-
-            const correction = penetration * stiffness * 0.5;
-
-            this.positions[indexA]! += nx * correction;
-            this.positions[indexA + 1]! += ny * correction;
-            this.positions[indexA + 2]! += nz * correction;
-
-            this.positions[indexB]! -= nx * correction;
-            this.positions[indexB + 1]! -= ny * correction;
-            this.positions[indexB + 2]! -= nz * correction;
-          }
+          this.sleeping[i] = 0;
+          this.sleeping[j] = 0;
         }
       }
     }
   }
 
   solveGlobeCollision() {
-    const collisionSlop = 0.003;
+    const collisionSlop = 0.0005;
     const radius = GLOBE_RADIUS - PARTICLE_RADIUS - collisionSlop;
     const radiusSq = radius * radius;
 
@@ -273,18 +311,11 @@ export class PBDSystem {
           vz -= nz * normalVelocity;
         }
 
-        const tangentScale = 1.002;
-
-        vx *= tangentScale;
-        vy *= tangentScale;
-        vz *= tangentScale;
-
         vx *= DYNAMIC_FRICTION;
         vy *= DYNAMIC_FRICTION;
         vz *= DYNAMIC_FRICTION;
 
         const speedSq = vx * vx + vy * vy + vz * vz;
-
         const maxSpeed = 0.12;
 
         if (speedSq > maxSpeed * maxSpeed) {
@@ -300,6 +331,8 @@ export class PBDSystem {
         this.previousPositions[index]! = x - vx;
         this.previousPositions[index + 1]! = y - vy;
         this.previousPositions[index + 2]! = z - vz;
+
+        this.sleeping[i] = 0;
       }
     }
   }
@@ -308,10 +341,20 @@ export class PBDSystem {
     const boxMinX = -0.6;
     const boxMinY = -2.3;
     const boxMinZ = -0.6;
-
     const boxMaxX = 0.6;
     const boxMaxY = -1.2;
     const boxMaxZ = 0.6;
+
+    const expandedMinX = boxMinX - PARTICLE_RADIUS;
+    const expandedMinY = boxMinY - PARTICLE_RADIUS;
+    const expandedMinZ = boxMinZ - PARTICLE_RADIUS;
+    const expandedMaxX = boxMaxX + PARTICLE_RADIUS;
+    const expandedMaxY = boxMaxY + PARTICLE_RADIUS;
+    const expandedMaxZ = boxMaxZ + PARTICLE_RADIUS;
+
+    const centerX = (boxMinX + boxMaxX) * 0.5;
+    const centerY = (boxMinY + boxMaxY) * 0.5;
+    const centerZ = (boxMinZ + boxMaxZ) * 0.5;
 
     for (let i = 0; i < this.count; i++) {
       const index = i * 3;
@@ -321,52 +364,57 @@ export class PBDSystem {
       let z = this.positions[index + 2]!;
 
       const inside =
-        x > boxMinX &&
-        x < boxMaxX &&
-        y > boxMinY &&
-        y < boxMaxY &&
-        z > boxMinZ &&
-        z < boxMaxZ;
+        x > expandedMinX &&
+        x < expandedMaxX &&
+        y > expandedMinY &&
+        y < expandedMaxY &&
+        z > expandedMinZ &&
+        z < expandedMaxZ;
 
       if (!inside) continue;
-
-      const left = Math.abs(x - boxMinX);
-      const right = Math.abs(boxMaxX - x);
-      const bottom = Math.abs(y - boxMinY);
-      const top = Math.abs(boxMaxY - y);
-      const back = Math.abs(z - boxMinZ);
-      const front = Math.abs(boxMaxZ - z);
-
-      const minDistance = Math.min(left, right, bottom, top, back, front);
 
       let nx = 0;
       let ny = 0;
       let nz = 0;
 
-      if (minDistance === left) {
-        x = boxMinX - PARTICLE_RADIUS + 0.003;
+      const localX = x - centerX;
+      const localY = y - centerY;
+      const localZ = z - centerZ;
 
-        nx = -1;
-      } else if (minDistance === right) {
-        x = boxMaxX + PARTICLE_RADIUS + 0.003;
+      const absX = Math.abs(localX);
+      const absY = Math.abs(localY);
+      const absZ = Math.abs(localZ);
 
-        nx = 1;
-      } else if (minDistance === bottom) {
-        y = boxMinY - PARTICLE_RADIUS + 0.003;
+      if (absX > absY && absX > absZ) {
+        if (localX < 0) {
+          x = expandedMinX;
 
-        ny = -1;
-      } else if (minDistance === top) {
-        y = boxMaxY + PARTICLE_RADIUS + 0.003;
+          nx = -1;
+        } else {
+          x = expandedMaxX;
 
-        ny = 1;
-      } else if (minDistance === back) {
-        z = boxMinZ - PARTICLE_RADIUS + 0.003;
+          nx = 1;
+        }
+      } else if (absY > absX && absY > absZ) {
+        if (localY < 0) {
+          y = expandedMinY;
 
-        nz = -1;
+          ny = -1;
+        } else {
+          y = expandedMaxY;
+
+          ny = 1;
+        }
       } else {
-        z = boxMaxZ + PARTICLE_RADIUS + 0.003;
+        if (localZ < 0) {
+          z = expandedMinZ;
 
-        nz = 1;
+          nz = -1;
+        } else {
+          z = expandedMaxZ;
+
+          nz = 1;
+        }
       }
 
       this.positions[index]! = x;
@@ -385,6 +433,14 @@ export class PBDSystem {
         vz -= nz * normalVelocity;
       }
 
+      const tangentVelocitySq = vx * vx + vy * vy + vz * vz;
+
+      if (tangentVelocitySq < 0.00008) {
+        vx = 0;
+        vy = 0;
+        vz = 0;
+      }
+
       vx *= BOX_FRICTION;
       vy *= BOX_FRICTION;
       vz *= BOX_FRICTION;
@@ -400,6 +456,8 @@ export class PBDSystem {
       this.previousPositions[index]! = x - vx;
       this.previousPositions[index + 1]! = y - vy;
       this.previousPositions[index + 2]! = z - vz;
+
+      this.sleeping[i] = 0;
     }
   }
 }
