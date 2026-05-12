@@ -9,8 +9,14 @@ import {
   CABIN_COLLIDERS,
 } from "@/utils/constants";
 
-import { useSimulationStore } from "@/simulation/simulationStore";
-import { useSimulationConfig } from "@/simulation/simulationConfig";
+import {
+  applyVelocityFriction,
+  solveVerticalCylinderCollision,
+  solveBoxCollision,
+} from "@/utils/utils";
+
+import { useSimulationStore } from "@/hooks/simulationStore";
+import { useSimulationConfig } from "@/hooks/simulationConfig";
 
 const SUBSTEPS = 1;
 const SOLVER_ITERATIONS = 1;
@@ -426,136 +432,66 @@ export class PBDSystem {
       let pz = this.positions[index + 2]!;
 
       for (const tree of this.trees) {
-        // -------------------------
-        // TRUNK COLLISION
-        // -------------------------
+        const trunkCollision = solveVerticalCylinderCollision(
+          px,
+          py,
+          pz,
+          tree.trunkPosition[0],
+          tree.trunkPosition[1],
+          tree.trunkPosition[2],
+          0.04,
+          0.5,
+        );
 
-        const trunkX = tree.trunkPosition[0];
-        const trunkY = tree.trunkPosition[1];
-        const trunkZ = tree.trunkPosition[2];
+        if (trunkCollision.collided) {
+          px = trunkCollision.px;
+          py = trunkCollision.py;
+          pz = trunkCollision.pz;
 
-        const trunkRadius = 0.04;
-        const trunkHeight = 0.5;
+          this.positions[index] = px;
+          this.positions[index + 1] = py;
+          this.positions[index + 2] = pz;
 
-        const trunkMinY = trunkY - trunkHeight * 0.5;
-        const trunkMaxY = trunkY + trunkHeight * 0.5;
-
-        if (py >= trunkMinY && py <= trunkMaxY) {
-          const dx = px - trunkX;
-          const dz = pz - trunkZ;
-
-          const distSq = dx * dx + dz * dz;
-
-          const radius = trunkRadius + PARTICLE_RADIUS;
-
-          if (distSq < radius * radius) {
-            const dist = Math.sqrt(distSq);
-
-            if (dist > 0.00001) {
-              const penetration = radius - dist;
-
-              const invDist = 1 / dist;
-
-              const nx = dx * invDist;
-              const nz = dz * invDist;
-
-              const correction = penetration * 0.15;
-
-              px += nx * correction;
-              pz += nz * correction;
-
-              this.positions[index]! = px;
-              this.positions[index + 2]! = pz;
-
-              let vx = px - this.previousPositions[index]!;
-              let vz = pz - this.previousPositions[index + 2]!;
-
-              vx *= 0.96;
-              vz *= 0.96;
-
-              this.previousPositions[index]! = px - vx;
-              this.previousPositions[index + 2]! = pz - vz;
-
-              this.sleeping[i] = 0;
-            }
-          }
-        }
-
-        // -------------------------
-        // BOX COLLISIONS
-        // -------------------------
-
-        for (const box of tree.layers) {
-          const centerX = box.position[0];
-          const centerY = box.position[1];
-          const centerZ = box.position[2];
-
-          const halfX = 0.7 * box.scale[0] * 0.5;
-          const halfY = 0.7 * box.scale[1] * 0.5;
-          const halfZ = 0.7 * box.scale[2] * 0.5;
-
-          const expandedX = halfX + PARTICLE_RADIUS;
-          const expandedY = halfY + PARTICLE_RADIUS;
-          const expandedZ = halfZ + PARTICLE_RADIUS;
-
-          const localX = px - centerX;
-          const localY = py - centerY;
-          const localZ = pz - centerZ;
-
-          const inside =
-            Math.abs(localX) < expandedX &&
-            Math.abs(localY) < expandedY &&
-            Math.abs(localZ) < expandedZ;
-
-          if (!inside) continue;
-
-          const dx = expandedX - Math.abs(localX);
-          const dy = expandedY - Math.abs(localY);
-          const dz = expandedZ - Math.abs(localZ);
-
-          let nx = 0;
-          let ny = 0;
-          let nz = 0;
-
-          let correction;
-
-          if (dx < dy && dx < dz) {
-            nx = localX < 0 ? -1 : 1;
-
-            correction = dx;
-          } else if (dy < dz) {
-            ny = localY < 0 ? -1 : 1;
-
-            correction = dy;
-          } else {
-            nz = localZ < 0 ? -1 : 1;
-
-            correction = dz;
-          }
-
-          const softness = 0.12;
-
-          px += nx * correction * softness;
-          py += ny * correction * softness;
-          pz += nz * correction * softness;
-
-          this.positions[index]! = px;
-          this.positions[index + 1]! = py;
-          this.positions[index + 2]! = pz;
-
-          let vx = px - this.previousPositions[index]!;
-          let vy = py - this.previousPositions[index + 1]!;
-          let vz = pz - this.previousPositions[index + 2]!;
-
-          vx *= 0.985;
-          vy *= 0.985;
-          vz *= 0.985;
-
-          this.previousPositions[index]! = px - vx;
-          this.previousPositions[index + 1]! = py - vy;
-          this.previousPositions[index + 2]! = pz - vz;
+          applyVelocityFriction(
+            this.previousPositions,
+            index,
+            px,
+            py,
+            pz,
+            0.96,
+          );
 
           this.sleeping[i] = 0;
+        }
+
+        for (const layer of tree.layers) {
+          const center = new THREE.Vector3(
+            layer.position[0],
+            layer.position[1],
+            layer.position[2],
+          );
+
+          const halfSize = new THREE.Vector3(
+            0.7 * layer.scale[0] * 0.5,
+            0.7 * layer.scale[1] * 0.5,
+            0.7 * layer.scale[2] * 0.5,
+          );
+
+          const boxCollision = solveBoxCollision(px, py, pz, center, halfSize);
+
+          if (boxCollision.collided) {
+            px = boxCollision.px;
+            py = boxCollision.py;
+            pz = boxCollision.pz;
+
+            this.positions[index] = px;
+            this.positions[index + 1] = py;
+            this.positions[index + 2] = pz;
+
+            applyVelocityFriction(this.previousPositions, index, px, py, pz);
+
+            this.sleeping[i] = 0;
+          }
         }
       }
     }
@@ -570,77 +506,28 @@ export class PBDSystem {
       let pz = this.positions[index + 2]!;
 
       for (const box of this.cabinBoxes) {
-        const cos = Math.cos(-box.rotation);
-        const sin = Math.sin(-box.rotation);
+        const collision = solveBoxCollision(
+          px,
+          py,
+          pz,
+          box.center,
+          box.halfSize,
+          box.rotation,
+        );
 
-        // local space
-        const localX = (px - box.center.x) * cos - (py - box.center.y) * sin;
-        const localY = (px - box.center.x) * sin + (py - box.center.y) * cos;
-        const localZ = pz - box.center.z;
+        if (collision.collided) {
+          px = collision.px;
+          py = collision.py;
+          pz = collision.pz;
 
-        const expandedX = box.halfSize.x + PARTICLE_RADIUS;
-        const expandedY = box.halfSize.y + PARTICLE_RADIUS;
-        const expandedZ = box.halfSize.z + PARTICLE_RADIUS;
+          this.positions[index] = px;
+          this.positions[index + 1] = py;
+          this.positions[index + 2] = pz;
 
-        const inside =
-          Math.abs(localX) < expandedX &&
-          Math.abs(localY) < expandedY &&
-          Math.abs(localZ) < expandedZ;
+          applyVelocityFriction(this.previousPositions, index, px, py, pz);
 
-        if (!inside) continue;
-
-        const dx = expandedX - Math.abs(localX);
-        const dy = expandedY - Math.abs(localY);
-        const dz = expandedZ - Math.abs(localZ);
-
-        let nx = 0;
-        let ny = 0;
-        let nz = 0;
-
-        let correction;
-
-        if (dx < dy && dx < dz) {
-          nx = localX < 0 ? -1 : 1;
-
-          correction = dx;
-        } else if (dy < dz) {
-          ny = localY < 0 ? -1 : 1;
-
-          correction = dy;
-        } else {
-          nz = localZ < 0 ? -1 : 1;
-
-          correction = dz;
+          this.sleeping[i] = 0;
         }
-
-        // rotate normal back
-        const worldNX = nx * cos + ny * sin;
-        const worldNY = -nx * sin + ny * cos;
-        const worldNZ = nz;
-
-        const softness = 0.12;
-
-        px += worldNX * correction * softness;
-        py += worldNY * correction * softness;
-        pz += worldNZ * correction * softness;
-
-        this.positions[index]! = px;
-        this.positions[index + 1]! = py;
-        this.positions[index + 2]! = pz;
-
-        let vx = px - this.previousPositions[index]!;
-        let vy = py - this.previousPositions[index + 1]!;
-        let vz = pz - this.previousPositions[index + 2]!;
-
-        vx *= 0.985;
-        vy *= 0.985;
-        vz *= 0.985;
-
-        this.previousPositions[index]! = px - vx;
-        this.previousPositions[index + 1]! = py - vy;
-        this.previousPositions[index + 2]! = pz - vz;
-
-        this.sleeping[i] = 0;
       }
     }
   }

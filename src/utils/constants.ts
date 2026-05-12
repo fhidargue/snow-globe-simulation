@@ -158,8 +158,8 @@ export type CollisionBox = {
 };
 
 export const CABIN_BODY: CollisionBox = {
-  position: [0.03, -1.1, -0.12],
-  scale: [0.9, 0.7, 1],
+  position: [0.03, -1.2, -0.12],
+  scale: [0.9, 1, 1.6],
 };
 
 export const CABIN_ROOF: CollisionBox[] = [

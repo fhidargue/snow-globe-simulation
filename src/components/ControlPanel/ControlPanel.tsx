@@ -1,6 +1,6 @@
 import { useControls } from "leva";
 import { useEffect } from "react";
-import { useSimulationConfig } from "@/simulation/simulationConfig";
+import { useSimulationConfig } from "@/hooks/simulationConfig";
 
 export default function ControlsPanel() {
   const gravity = useSimulationConfig((state) => state.gravity);

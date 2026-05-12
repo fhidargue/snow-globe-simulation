@@ -2,7 +2,7 @@ import CabinEllipsoid from "@/components/Ellipsoids/CabinEllipsoid";
 import GroundEllipsoid from "@/components/Ellipsoids/GroundEllipsoid";
 import TreeEllipsoid from "@/components/Ellipsoids/TreeEllipsoid";
 import Model, { type ModelProps } from "@/components/Model/Model";
-import { useSimulationConfig } from "@/simulation/simulationConfig";
+import { useSimulationConfig } from "@/hooks/simulationConfig";
 import {
   BASE,
   CABIN,
