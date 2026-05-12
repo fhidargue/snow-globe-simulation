@@ -20,10 +20,10 @@ export const SCALE = 20;
 export const CABIN = {
   model: "/assets/components/cabin.glb",
   textures: {
-    map: "/assets/textures/cabin/cabin.png",
-    normalMap: "/assets/textures/cabin/cabin_normal.png",
-    roughnessMap: "/assets/textures/cabin/cabin_roughness.png",
-    metalnessMap: "/assets/textures/cabin/cabin_metallic.png",
+    map: "/assets/textures/cabin/cabin.jpg",
+    normalMap: "/assets/textures/cabin/cabin_normal.jpg",
+    roughnessMap: "/assets/textures/cabin/cabin_roughness.jpg",
+    metalnessMap: "/assets/textures/cabin/cabin_metallic.jpg",
   },
   position: [0, -3.5, 0] as [number, number, number],
   rotation: [0, Math.PI, 0] as [number, number, number],
@@ -31,7 +31,7 @@ export const CABIN = {
 export const BASE = {
   model: "/assets/components/base.glb",
   textures: {
-    map: "/assets/textures/base/oak_base.png",
+    map: "/assets/textures/base/oak_base.jpg",
   },
   position: [0, -3.5, 0] as [number, number, number],
   rotation: [0, Math.PI, 0] as [number, number, number],
@@ -45,7 +45,7 @@ export const PLAQUE = {
   model: "/assets/components/plaque.glb",
   textures: {
     map: "/assets/textures/plaque/gold.jpg",
-    normalMap: "/assets/textures/plaque/gold_normal.png",
+    normalMap: "/assets/textures/plaque/gold_normal.jpg",
     metalnessMap: "/assets/textures/plaque/gold_metallic.jpg",
     roughnessMap: "/assets/textures/plaque/gold_roughness.jpg",
   },
@@ -56,7 +56,7 @@ export const PLAQUE = {
 export const TREE_BASE = {
   model: "/assets/components/tree_base.glb",
   textures: {
-    map: "/assets/textures/tree_base/red_wood.png",
+    map: "/assets/textures/tree_base/red_wood.jpg",
   },
   position: [0, -3.5, 0] as [number, number, number],
   rotation: [0, Math.PI, 0] as [number, number, number],
