@@ -19,7 +19,7 @@ const Lighting = () => {
 };
 
 export default function App() {
-  const background = useSimulationConfig((state) => state.background);
+  const showBackground = useSimulationConfig((state) => state.showBackground);
   const backgroundScene = useSimulationConfig((state) => state.backgroundScene);
 
   return (
@@ -42,7 +42,7 @@ export default function App() {
         <Suspense fallback={null}>
           <Environment
             files={backgroundScene}
-            background={background}
+            background={showBackground}
             environmentIntensity={0.5}
             backgroundIntensity={0.05}
           />

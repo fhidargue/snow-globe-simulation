@@ -1,10 +1,13 @@
+import CabinEllipsoid from "@/components/Ellipsoids/CabinEllipsoid";
+import GroundEllipsoid from "@/components/Ellipsoids/GroundEllipsoid";
+import TreeEllipsoid from "@/components/Ellipsoids/TreeEllipsoid";
 import Model, { type ModelProps } from "@/components/Model/Model";
+import { useSimulationConfig } from "@/simulation/simulationConfig";
 import {
   BASE,
   CABIN,
   GROUND,
   PLAQUE,
-  SCALE,
   TREE_BALLS,
   TREE_BASE,
   TREE_BRANCHES,
@@ -42,9 +45,19 @@ const Globe = () => {
 };
 
 export default function GlobeVisuals() {
+  const showEllipsoids = useSimulationConfig((state) => state.showEllipsoids);
+
   return (
     <group>
       <Globe />
+      {showEllipsoids && (
+        <>
+          <TreeEllipsoid />
+          <CabinEllipsoid />
+          <GroundEllipsoid />
+        </>
+      )}
+
       {MODELS.map((item) => (
         <Model
           key={item.model}
@@ -54,7 +67,7 @@ export default function GlobeVisuals() {
           metalness={item.metalness}
           position={item.position}
           rotation={item.rotation}
-          scale={SCALE}
+          scale={item.scale}
         />
       ))}
     </group>
