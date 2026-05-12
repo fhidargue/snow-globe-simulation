@@ -1,6 +1,6 @@
 import { useControls } from "leva";
 import { useEffect } from "react";
-import { useSimulationConfig } from "@/simulation/simulationConfig";
+import { useSimulationConfig } from "@/hooks/simulationConfig";
 
 export default function ControlsPanel() {
   const gravity = useSimulationConfig((state) => state.gravity);
@@ -15,12 +15,19 @@ export default function ControlsPanel() {
   const materialType = useSimulationConfig((state) => state.materialType);
   const setMaterialType = useSimulationConfig((state) => state.setMaterialType);
 
-  const background = useSimulationConfig((state) => state.background);
-  const setBackground = useSimulationConfig((state) => state.setBackground);
+  const showBackground = useSimulationConfig((state) => state.showBackground);
+  const setShowBackground = useSimulationConfig(
+    (state) => state.setShowBackground,
+  );
 
   const backgroundScene = useSimulationConfig((state) => state.backgroundScene);
   const setBackgroundScene = useSimulationConfig(
     (state) => state.setBackgroundScene,
+  );
+
+  const showEllipsoids = useSimulationConfig((state) => state.showEllipsoids);
+  const setShowEllipsoids = useSimulationConfig(
+    (state) => state.setShowEllipsoids,
   );
 
   const controls = useControls({
@@ -68,7 +75,12 @@ export default function ControlsPanel() {
 
     background: {
       label: "Background",
-      value: background,
+      value: showBackground,
+    },
+
+    showEllipsoids: {
+      label: "Show Ellipsoids",
+      value: showEllipsoids,
     },
   });
 
@@ -77,8 +89,9 @@ export default function ControlsPanel() {
     setSnowCount(controls.snowCount);
     setParticleSize(controls.particleSize);
     setMaterialType(controls.materialType as "snow" | "marble");
-    setBackground(controls.background);
+    setShowBackground(controls.background);
     setBackgroundScene(controls.backgroundScene);
+    setShowEllipsoids(controls.showEllipsoids);
   }, [
     controls.gravity,
     controls.snowCount,
@@ -86,12 +99,14 @@ export default function ControlsPanel() {
     controls.materialType,
     controls.background,
     controls.backgroundScene,
+    controls.showEllipsoids,
     setGravity,
     setSnowCount,
     setParticleSize,
     setMaterialType,
-    setBackground,
+    setShowBackground,
     setBackgroundScene,
+    setShowEllipsoids,
   ]);
 
   return null;

@@ -3,7 +3,7 @@ import { useMemo, useRef } from "react";
 
 import * as THREE from "three";
 
-import { PBDSystem } from "@/simulation/PBD/PBDSystem";
+import { PBDSystem } from "@/simulation/PBDSystem/PBDSystem";
 
 const tempObject = new THREE.Object3D();
 

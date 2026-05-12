@@ -1,0 +1,13 @@
+.fps-counter {
+  transform: scale(2);
+  transform-origin: top left;
+}
+
+.fps-counter,
+.fps-counter * {
+  color: white;
+}
+
+.fps-counter svg path {
+  display: none;
+}

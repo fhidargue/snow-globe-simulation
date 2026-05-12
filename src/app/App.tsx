@@ -1,12 +1,12 @@
 import { Canvas } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import { Suspense } from "react";
-import { Perf } from "r3f-perf";
+import { Leva } from "leva";
+import { useSimulationConfig } from "@/hooks/simulationConfig";
 import Scene from "@/rendering/Scene/Scene";
 import ControlsPanel from "@/components/ControlPanel/ControlPanel";
-import { useSimulationConfig } from "@/simulation/simulationConfig";
+import FPSCounter from "@/components/FPSCounter/FPSCounter";
 
-const PerformanceMonitor = () => <Perf position="top-left" />;
 const ColorBackground = () => <color attach="background" args={["#050816"]} />;
 const Fog = () => <fog attach="fog" args={["#050816", 12, 35]} />;
 const Lighting = () => {
@@ -17,14 +17,35 @@ const Lighting = () => {
     </>
   );
 };
+const LevaControls = () => {
+  return (
+    <>
+      <Leva
+        collapsed={false}
+        theme={{
+          sizes: {
+            rootWidth: "400px",
+            numberInputMinWidth: "60px",
+            controlWidth: "180px",
+            rowHeight: "38px",
+          },
+          fontSizes: {
+            root: "16px",
+          },
+        }}
+      />
+      <ControlsPanel />
+    </>
+  );
+};
 
 export default function App() {
-  const background = useSimulationConfig((state) => state.background);
+  const showBackground = useSimulationConfig((state) => state.showBackground);
   const backgroundScene = useSimulationConfig((state) => state.backgroundScene);
 
   return (
     <>
-      <ControlsPanel />
+      <LevaControls />
       <Canvas
         shadows
         camera={{
@@ -35,14 +56,14 @@ export default function App() {
           antialias: true,
         }}
       >
-        <PerformanceMonitor />
+        <FPSCounter />
         <ColorBackground />
         <Fog />
         <Lighting />
         <Suspense fallback={null}>
           <Environment
             files={backgroundScene}
-            background={background}
+            background={showBackground}
             environmentIntensity={0.5}
             backgroundIntensity={0.05}
           />

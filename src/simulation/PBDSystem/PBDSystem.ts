@@ -4,16 +4,23 @@ import {
   GLOBE_RADIUS,
   GRID_CELL_SIZE,
   PARTICLE_RADIUS,
-} from "../../utils/constants";
+  LEFT_TREE,
+  RIGHT_TREE,
+  CABIN_COLLIDERS,
+} from "@/utils/constants";
 
-import { useSimulationStore } from "../simulationStore";
-import { useSimulationConfig } from "../simulationConfig";
+import {
+  applyVelocityFriction,
+  solveVerticalCylinderCollision,
+  solveBoxCollision,
+} from "@/utils/utils";
+
+import { useSimulationStore } from "@/hooks/simulationStore";
+import { useSimulationConfig } from "@/hooks/simulationConfig";
 
 const SUBSTEPS = 1;
 const SOLVER_ITERATIONS = 1;
-const STATIC_FRICTION_THRESHOLD = 0.000002;
 const DYNAMIC_FRICTION = 0.9985;
-const BOX_FRICTION = 0.78;
 const SLEEP_DELAY = 20;
 const WAKE_DISTANCE = PARTICLE_RADIUS * 1.5;
 const WAKE_DISTANCE_SQ = WAKE_DISTANCE * WAKE_DISTANCE;
@@ -46,6 +53,20 @@ export class PBDSystem {
 
   private gravityVector = new THREE.Vector3();
   private inverseQuaternion = new THREE.Quaternion();
+  private trees = [LEFT_TREE, RIGHT_TREE];
+  private cabinBoxes = CABIN_COLLIDERS.map((collider) => ({
+    center: new THREE.Vector3(
+      collider.position[0],
+      collider.position[1],
+      collider.position[2],
+    ),
+    halfSize: new THREE.Vector3(
+      0.72 * collider.scale[0] * 0.5,
+      0.72 * collider.scale[1] * 0.5,
+      0.72 * collider.scale[2] * 0.5,
+    ),
+    rotation: collider.rotation?.[2] || 0,
+  }));
 
   constructor(count: number) {
     this.count = count;
@@ -136,7 +157,9 @@ export class PBDSystem {
 
       for (let iteration = 0; iteration < SOLVER_ITERATIONS; iteration++) {
         this.solveParticleCollisions();
-        this.solveInnerObjectCollision();
+        this.solveGroundCollision();
+        this.solveTreeCollisions();
+        this.solveCabinCollisions();
         this.solveGlobeCollision();
       }
     }
@@ -341,119 +364,54 @@ export class PBDSystem {
     }
   }
 
-  solveInnerObjectCollision() {
-    const boxMinX = -0.6;
-    const boxMinY = -2.3;
-    const boxMinZ = -0.6;
-    const boxMaxX = 0.6;
-    const boxMaxY = -1.2;
-    const boxMaxZ = 0.6;
+  solveGroundCollision() {
+    const centerY = -1.58;
 
-    const expandedMinX = boxMinX - PARTICLE_RADIUS;
-    const expandedMinY = boxMinY - PARTICLE_RADIUS;
-    const expandedMinZ = boxMinZ - PARTICLE_RADIUS;
-    const expandedMaxX = boxMaxX + PARTICLE_RADIUS;
-    const expandedMaxY = boxMaxY + PARTICLE_RADIUS;
-    const expandedMaxZ = boxMaxZ + PARTICLE_RADIUS;
-
-    const centerX = (boxMinX + boxMaxX) * 0.5;
-    const centerY = (boxMinY + boxMaxY) * 0.5;
-    const centerZ = (boxMinZ + boxMaxZ) * 0.5;
+    const radiusX = 1.82;
+    const radiusY = 1.82 * 0.1;
+    const radiusZ = 1.82;
 
     for (let i = 0; i < this.count; i++) {
       const index = i * 3;
 
-      let x = this.positions[index]!;
+      const x = this.positions[index]!;
       let y = this.positions[index + 1]!;
-      let z = this.positions[index + 2]!;
+      const z = this.positions[index + 2]!;
 
-      const inside =
-        x > expandedMinX &&
-        x < expandedMaxX &&
-        y > expandedMinY &&
-        y < expandedMaxY &&
-        z > expandedMinZ &&
-        z < expandedMaxZ;
+      const normalizedXZ =
+        (x * x) / (radiusX * radiusX) + (z * z) / (radiusZ * radiusZ);
 
-      if (!inside) continue;
+      // outside mound footprint
+      if (normalizedXZ > 1) continue;
 
-      let nx = 0;
-      let ny = 0;
-      let nz = 0;
+      // ellipsoid surface equation
+      const surfaceY = centerY + radiusY * Math.sqrt(1 - normalizedXZ);
 
-      const localX = x - centerX;
-      const localY = y - centerY;
-      const localZ = z - centerZ;
+      const minY = surfaceY + PARTICLE_RADIUS;
 
-      const absX = Math.abs(localX);
-      const absY = Math.abs(localY);
-      const absZ = Math.abs(localZ);
+      if (y >= minY) continue;
 
-      if (absX > absY && absX > absZ) {
-        if (localX < 0) {
-          x = expandedMinX;
+      y = minY;
 
-          nx = -1;
-        } else {
-          x = expandedMaxX;
-
-          nx = 1;
-        }
-      } else if (absY > absX && absY > absZ) {
-        if (localY < 0) {
-          y = expandedMinY;
-
-          ny = -1;
-        } else {
-          y = expandedMaxY;
-
-          ny = 1;
-        }
-      } else {
-        if (localZ < 0) {
-          z = expandedMinZ;
-
-          nz = -1;
-        } else {
-          z = expandedMaxZ;
-
-          nz = 1;
-        }
-      }
-
-      this.positions[index]! = x;
       this.positions[index + 1]! = y;
-      this.positions[index + 2]! = z;
 
       let vx = x - this.previousPositions[index]!;
       let vy = y - this.previousPositions[index + 1]!;
       let vz = z - this.previousPositions[index + 2]!;
 
-      const normalVelocity = vx * nx + vy * ny + vz * nz;
-
-      if (normalVelocity > 0) {
-        vx -= nx * normalVelocity;
-        vy -= ny * normalVelocity;
-        vz -= nz * normalVelocity;
+      // remove downward motion
+      if (vy < 0) {
+        vy = 0;
       }
 
-      const tangentVelocitySq = vx * vx + vy * vy + vz * vz;
+      // ground friction
+      vx *= 0.96;
+      vz *= 0.96;
 
-      if (tangentVelocitySq < 0.00008) {
+      const speedSq = vx * vx + vz * vz;
+
+      if (speedSq < 0.00002) {
         vx = 0;
-        vy = 0;
-        vz = 0;
-      }
-
-      vx *= BOX_FRICTION;
-      vy *= BOX_FRICTION;
-      vz *= BOX_FRICTION;
-
-      const speedSq = vx * vx + vy * vy + vz * vz;
-
-      if (speedSq < STATIC_FRICTION_THRESHOLD) {
-        vx = 0;
-        vy = 0;
         vz = 0;
       }
 
@@ -462,6 +420,115 @@ export class PBDSystem {
       this.previousPositions[index + 2]! = z - vz;
 
       this.sleeping[i] = 0;
+    }
+  }
+
+  solveTreeCollisions() {
+    for (let i = 0; i < this.count; i++) {
+      const index = i * 3;
+
+      let px = this.positions[index]!;
+      let py = this.positions[index + 1]!;
+      let pz = this.positions[index + 2]!;
+
+      for (const tree of this.trees) {
+        const trunkCollision = solveVerticalCylinderCollision(
+          px,
+          py,
+          pz,
+          tree.trunkPosition[0],
+          tree.trunkPosition[1],
+          tree.trunkPosition[2],
+          0.04,
+          0.5,
+        );
+
+        if (trunkCollision.collided) {
+          px = trunkCollision.px;
+          py = trunkCollision.py;
+          pz = trunkCollision.pz;
+
+          this.positions[index] = px;
+          this.positions[index + 1] = py;
+          this.positions[index + 2] = pz;
+
+          applyVelocityFriction(
+            this.previousPositions,
+            index,
+            px,
+            py,
+            pz,
+            0.96,
+          );
+
+          this.sleeping[i] = 0;
+        }
+
+        for (const layer of tree.layers) {
+          const center = new THREE.Vector3(
+            layer.position[0],
+            layer.position[1],
+            layer.position[2],
+          );
+
+          const halfSize = new THREE.Vector3(
+            0.7 * layer.scale[0] * 0.5,
+            0.7 * layer.scale[1] * 0.5,
+            0.7 * layer.scale[2] * 0.5,
+          );
+
+          const boxCollision = solveBoxCollision(px, py, pz, center, halfSize);
+
+          if (boxCollision.collided) {
+            px = boxCollision.px;
+            py = boxCollision.py;
+            pz = boxCollision.pz;
+
+            this.positions[index] = px;
+            this.positions[index + 1] = py;
+            this.positions[index + 2] = pz;
+
+            applyVelocityFriction(this.previousPositions, index, px, py, pz);
+
+            this.sleeping[i] = 0;
+          }
+        }
+      }
+    }
+  }
+
+  solveCabinCollisions() {
+    for (let i = 0; i < this.count; i++) {
+      const index = i * 3;
+
+      let px = this.positions[index]!;
+      let py = this.positions[index + 1]!;
+      let pz = this.positions[index + 2]!;
+
+      for (const box of this.cabinBoxes) {
+        const collision = solveBoxCollision(
+          px,
+          py,
+          pz,
+          box.center,
+          box.halfSize,
+          box.rotation,
+        );
+
+        if (collision.collided) {
+          px = collision.px;
+          py = collision.py;
+          pz = collision.pz;
+
+          this.positions[index] = px;
+          this.positions[index + 1] = py;
+          this.positions[index + 2] = pz;
+
+          applyVelocityFriction(this.previousPositions, index, px, py, pz);
+
+          this.sleeping[i] = 0;
+        }
+      }
     }
   }
 }

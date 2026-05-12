@@ -6,7 +6,7 @@ import * as THREE from "three";
 import SnowParticles from "../SnowParticles/SnowParticles";
 import GlobeVisuals from "../Globe/GlobeVisuals";
 
-import { useSimulationStore } from "@/simulation/simulationStore";
+import { useSimulationStore } from "@/hooks/simulationStore";
 
 export default function Scene() {
   const groupRef = useRef<THREE.Group>(null);

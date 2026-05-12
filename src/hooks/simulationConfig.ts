@@ -10,14 +10,16 @@ interface SimulationConfigState {
   snowCount: number;
   particleSize: number;
   materialType: "snow" | "marble";
-  background: boolean;
+  showBackground: boolean;
   backgroundScene: string;
+  showEllipsoids: boolean;
   setGravity: (gravity: number) => void;
   setSnowCount: (snowCount: number) => void;
   setParticleSize: (particleSize: number) => void;
   setMaterialType: (type: "snow" | "marble") => void;
-  setBackground: (background: boolean) => void;
+  setShowBackground: (background: boolean) => void;
   setBackgroundScene: (scene: string) => void;
+  setShowEllipsoids: (showEllipsoids: boolean) => void;
 }
 
 export const useSimulationConfig = create<SimulationConfigState>((set) => ({
@@ -25,8 +27,9 @@ export const useSimulationConfig = create<SimulationConfigState>((set) => ({
   snowCount: NUM_PARTICLES,
   particleSize: PARTICLE_SIZE,
   materialType: "marble",
-  background: true,
+  showBackground: true,
   backgroundScene: "/hdr/christmas_studio.hdr",
+  showEllipsoids: false,
 
   setGravity: (gravity) => set({ gravity }),
   setSnowCount: (snowCount) =>
@@ -41,10 +44,13 @@ export const useSimulationConfig = create<SimulationConfigState>((set) => ({
     set({
       materialType,
     }),
-  setBackground: (background) => {
-    set({ background });
+  setShowBackground: (showBackground) => {
+    set({ showBackground });
   },
   setBackgroundScene: (backgroundScene) => {
     set({ backgroundScene });
+  },
+  setShowEllipsoids(showEllipsoids) {
+    set({ showEllipsoids });
   },
 }));
