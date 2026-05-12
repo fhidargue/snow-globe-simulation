@@ -1,5 +1,9 @@
 import { create } from "zustand";
-import { GRAVITY_VALUE, NUM_PARTICLES, PARTICLE_SIZE } from "./constants";
+import {
+  GRAVITY_VALUE,
+  NUM_PARTICLES,
+  PARTICLE_SIZE,
+} from "../utils/constants";
 
 interface SimulationConfigState {
   gravity: number;

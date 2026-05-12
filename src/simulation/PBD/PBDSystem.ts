@@ -1,6 +1,10 @@
 import * as THREE from "three";
 
-import { GLOBE_RADIUS, GRID_CELL_SIZE, PARTICLE_RADIUS } from "../constants";
+import {
+  GLOBE_RADIUS,
+  GRID_CELL_SIZE,
+  PARTICLE_RADIUS,
+} from "../../utils/constants";
 
 import { useSimulationStore } from "../simulationStore";
 import { useSimulationConfig } from "../simulationConfig";
