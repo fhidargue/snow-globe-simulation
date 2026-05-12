@@ -1,3 +1,27 @@
+import Model, { type ModelProps } from "@/components/Model/Model";
+import {
+  BASE,
+  CABIN,
+  GROUND,
+  PLAQUE,
+  SCALE,
+  TREE_BALLS,
+  TREE_BASE,
+  TREE_BRANCHES,
+  TREE_SNOW,
+} from "@/utils/constants";
+
+const MODELS: ModelProps[] = [
+  CABIN,
+  BASE,
+  GROUND,
+  PLAQUE,
+  TREE_BASE,
+  TREE_BRANCHES,
+  TREE_BALLS,
+  TREE_SNOW,
+];
+
 const Globe = () => {
   return (
     <>
@@ -17,30 +41,22 @@ const Globe = () => {
   );
 };
 
-const Base = () => {
-  return (
-    <mesh position={[0, -3, 0]} receiveShadow>
-      <cylinderGeometry args={[2, 2.5, 1, 32]} />
-      <meshStandardMaterial color="#151515" />
-    </mesh>
-  );
-};
-
-const PlaceholderObject = () => {
-  return (
-    <mesh position={[0, -1.8, 0]} castShadow>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color="#8b5a2b" />
-    </mesh>
-  );
-};
-
 export default function GlobeVisuals() {
   return (
     <group>
       <Globe />
-      <Base />
-      <PlaceholderObject />
+      {MODELS.map((item) => (
+        <Model
+          key={item.model}
+          model={item.model}
+          textures={item.textures}
+          color={item.color}
+          metalness={item.metalness}
+          position={item.position}
+          rotation={item.rotation}
+          scale={SCALE}
+        />
+      ))}
     </group>
   );
 }
