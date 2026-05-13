@@ -8,6 +8,7 @@ export const DAMPING = 0.96;
 export const SLEEP_THRESHOLD = 0.0005;
 export const FLOOR_Y = -2.2;
 export const MOUSE_FORCE = 0.015;
+export const MOUSE_SENSITIVITY = 1;
 export const GRID_CELL_SIZE = 0.06;
 export const NUM_PARTICLES = 2000;
 export const PARTICLE_SIZE = 1;
