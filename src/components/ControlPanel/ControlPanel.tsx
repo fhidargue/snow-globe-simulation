@@ -4,6 +4,13 @@ import { useSimulationConfig } from "@/hooks/simulationConfig";
 import { MATERIAL_TYPE } from "@/utils/constants";
 
 export default function ControlsPanel() {
+  const mouseSensitivity = useSimulationConfig(
+    (state) => state.mouseSensitivity,
+  );
+  const setMouseSensitivity = useSimulationConfig(
+    (state) => state.setMouseSensitivity,
+  );
+
   const velocity = useSimulationConfig((state) => state.velocity);
   const setVelocity = useSimulationConfig((state) => state.setVelocity);
 
@@ -32,6 +39,18 @@ export default function ControlsPanel() {
   );
 
   const controls = useControls({
+    Info: {
+      value: "Refresh page to reset the settings",
+      editable: false,
+    },
+    mouseSensitivity: {
+      label: "Mouse Sensitivity",
+      value: mouseSensitivity,
+      min: 1,
+      max: 20,
+      step: 1,
+    },
+
     velocity: {
       label: "Velocity",
       value: velocity,
@@ -53,7 +72,7 @@ export default function ControlsPanel() {
       value: particleSize,
       min: 0,
       max: 3,
-      step: 0.01,
+      step: 0.1,
     },
 
     materialType: {
@@ -86,6 +105,7 @@ export default function ControlsPanel() {
   });
 
   useEffect(() => {
+    setMouseSensitivity(controls.mouseSensitivity);
     setVelocity(controls.velocity);
     setSnowCount(controls.snowCount);
     setParticleSize(controls.particleSize);
@@ -94,6 +114,7 @@ export default function ControlsPanel() {
     setBackgroundScene(controls.backgroundScene);
     setShowEllipsoids(controls.showEllipsoids);
   }, [
+    controls.mouseSensitivity,
     controls.velocity,
     controls.snowCount,
     controls.particleSize,
@@ -101,6 +122,7 @@ export default function ControlsPanel() {
     controls.background,
     controls.backgroundScene,
     controls.showEllipsoids,
+    setMouseSensitivity,
     setVelocity,
     setSnowCount,
     setParticleSize,

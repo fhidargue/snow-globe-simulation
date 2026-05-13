@@ -7,6 +7,10 @@ import SnowParticles from "@/components/SnowParticles/SnowParticles";
 import GlobeVisuals from "@/components/Globe/GlobeVisuals";
 
 import { useSimulationStore } from "@/hooks/simulationStore";
+import { useSimulationConfig } from "@/hooks/simulationConfig";
+
+const DRAG_SENSITIVITY = 0.0032;
+const MAX_ANGULAR_VELOCITY = 0.11;
 
 export default function Scene() {
   const groupRef = useRef<THREE.Group>(null);
@@ -18,6 +22,12 @@ export default function Scene() {
 
   const angularVelocity = useRef(new THREE.Vector2());
   const targetVelocity = useRef(new THREE.Vector2());
+
+  const mouseSensitivity = useSimulationConfig(
+    (state) => state.mouseSensitivity,
+  );
+
+  const dragSensitivity = DRAG_SENSITIVITY * mouseSensitivity;
 
   const setAngularVelocity = useSimulationStore(
     (state) => state.setAngularVelocity,
@@ -47,12 +57,12 @@ export default function Scene() {
       const deltaX = e.clientX - lastMouse.current.x;
       const deltaY = e.clientY - lastMouse.current.y;
 
-      // More responsive movement
-      targetVelocity.current.x = deltaX * 0.003;
-      targetVelocity.current.y = deltaY * 0.003;
+      // Natural drag feel
+      targetVelocity.current.x = deltaX * dragSensitivity;
+      targetVelocity.current.y = -deltaY * dragSensitivity;
 
-      // Immediate response
-      angularVelocity.current.copy(targetVelocity.current);
+      // Prevent extreme spinning
+      targetVelocity.current.clampLength(0, MAX_ANGULAR_VELOCITY);
 
       lastMouse.current = {
         x: e.clientX,
@@ -69,22 +79,23 @@ export default function Scene() {
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointermove", handlePointerMove);
     };
-  }, []);
+  }, []); // eslint-disable-line
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!groupRef.current) return;
 
     // Smooth inertia
-    angularVelocity.current.lerp(targetVelocity.current, 0.2);
+    angularVelocity.current.lerp(targetVelocity.current, 0.12);
 
-    // Slow momentum decay
-    targetVelocity.current.multiplyScalar(0.985);
+    // Framerate-independent damping
+    const damping = Math.pow(0.92, delta * 60);
 
-    // Share with simulation
+    targetVelocity.current.multiplyScalar(damping);
+
     setAngularVelocity(angularVelocity.current.x, angularVelocity.current.y);
     setGlobeQuaternion(groupRef.current.quaternion);
 
-    // Local axes
+    // Local rotation axes
     const localXAxis = new THREE.Vector3(1, 0, 0);
     const localYAxis = new THREE.Vector3(0, 1, 0);
 
@@ -97,20 +108,22 @@ export default function Scene() {
     qx.setFromAxisAngle(localXAxis, angularVelocity.current.y);
     qy.setFromAxisAngle(localYAxis, angularVelocity.current.x);
 
-    // Local rotation
+    // Apply local-space rotation
     groupRef.current.quaternion.multiply(qx);
     groupRef.current.quaternion.multiply(qy);
 
-    // Friction
-    angularVelocity.current.multiplyScalar(0.985);
+    angularVelocity.current.multiplyScalar(damping);
+
+    // Remove micro jitter
+    if (angularVelocity.current.lengthSq() < 0.000001) {
+      angularVelocity.current.set(0, 0);
+    }
   });
 
   return (
-    <>
-      <group ref={groupRef}>
-        <GlobeVisuals />
-        <SnowParticles />
-      </group>
-    </>
+    <group ref={groupRef}>
+      <GlobeVisuals />
+      <SnowParticles />
+    </group>
   );
 }

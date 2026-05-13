@@ -4,9 +4,11 @@ import {
   NUM_PARTICLES,
   PARTICLE_SIZE,
   MATERIAL_TYPE,
-} from "../utils/constants";
+  MOUSE_SENSITIVITY,
+} from "@/utils/constants";
 
 interface SimulationConfigState {
+  mouseSensitivity: number;
   velocity: number;
   snowCount: number;
   particleSize: number;
@@ -14,6 +16,7 @@ interface SimulationConfigState {
   showBackground: boolean;
   backgroundScene: string;
   showEllipsoids: boolean;
+  setMouseSensitivity: (mouseSensitivity: number) => void;
   setVelocity: (velocity: number) => void;
   setSnowCount: (snowCount: number) => void;
   setParticleSize: (particleSize: number) => void;
@@ -24,6 +27,7 @@ interface SimulationConfigState {
 }
 
 export const useSimulationConfig = create<SimulationConfigState>((set) => ({
+  mouseSensitivity: MOUSE_SENSITIVITY,
   velocity: VELOCITY_VALUE,
   snowCount: NUM_PARTICLES,
   particleSize: PARTICLE_SIZE,
@@ -32,6 +36,7 @@ export const useSimulationConfig = create<SimulationConfigState>((set) => ({
   backgroundScene: "/hdr/christmas_studio.hdr",
   showEllipsoids: false,
 
+  setMouseSensitivity: (mouseSensitivity) => set({ mouseSensitivity }),
   setVelocity: (velocity) => set({ velocity }),
   setSnowCount: (snowCount) =>
     set({
