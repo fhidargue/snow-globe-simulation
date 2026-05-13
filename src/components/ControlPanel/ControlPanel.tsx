@@ -1,10 +1,11 @@
 import { useControls } from "leva";
 import { useEffect } from "react";
 import { useSimulationConfig } from "@/hooks/simulationConfig";
+import { MATERIAL_TYPE } from "@/utils/constants";
 
 export default function ControlsPanel() {
-  const gravity = useSimulationConfig((state) => state.gravity);
-  const setGravity = useSimulationConfig((state) => state.setGravity);
+  const velocity = useSimulationConfig((state) => state.velocity);
+  const setVelocity = useSimulationConfig((state) => state.setVelocity);
 
   const snowCount = useSimulationConfig((state) => state.snowCount);
   const setSnowCount = useSimulationConfig((state) => state.setSnowCount);
@@ -31,19 +32,19 @@ export default function ControlsPanel() {
   );
 
   const controls = useControls({
-    gravity: {
-      label: "Gravity",
-      value: gravity,
+    velocity: {
+      label: "Velocity",
+      value: velocity,
       min: 0,
       max: 20,
-      step: 0.1,
+      step: 1,
     },
 
     snowCount: {
       label: "Snow Count",
       value: snowCount,
       min: 100,
-      max: 10000,
+      max: 18000,
       step: 100,
     },
 
@@ -59,8 +60,8 @@ export default function ControlsPanel() {
       label: "Material Type",
       value: materialType,
       options: {
-        Snow: "snow",
-        Marble: "marble",
+        Marbles: MATERIAL_TYPE.MARBLE,
+        Snow: MATERIAL_TYPE.SNOW,
       },
     },
 
@@ -74,7 +75,7 @@ export default function ControlsPanel() {
     },
 
     background: {
-      label: "Background",
+      label: "Show Background",
       value: showBackground,
     },
 
@@ -85,7 +86,7 @@ export default function ControlsPanel() {
   });
 
   useEffect(() => {
-    setGravity(controls.gravity);
+    setVelocity(controls.velocity);
     setSnowCount(controls.snowCount);
     setParticleSize(controls.particleSize);
     setMaterialType(controls.materialType as "snow" | "marble");
@@ -93,14 +94,14 @@ export default function ControlsPanel() {
     setBackgroundScene(controls.backgroundScene);
     setShowEllipsoids(controls.showEllipsoids);
   }, [
-    controls.gravity,
+    controls.velocity,
     controls.snowCount,
     controls.particleSize,
     controls.materialType,
     controls.background,
     controls.backgroundScene,
     controls.showEllipsoids,
-    setGravity,
+    setVelocity,
     setSnowCount,
     setParticleSize,
     setMaterialType,

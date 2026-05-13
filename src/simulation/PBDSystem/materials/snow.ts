@@ -1,4 +1,4 @@
-import { PARTICLE_RADIUS } from "@/utils/constants";
+import { MATERIAL_TYPE, PARTICLE_RADIUS } from "@/utils/constants";
 import type { PBDSystem } from "@/simulation/PBDSystem/PBDSystem";
 import { NEIGHBOR_OFFSETS } from "@/utils/utils";
 import { useSimulationConfig } from "@/hooks/simulationConfig";
@@ -10,7 +10,7 @@ const SNOW_STICK_RADIUS = PARTICLE_RADIUS * 3.6;
 export function solveSnowMaterial(system: PBDSystem) {
   const materialType = useSimulationConfig.getState().materialType;
 
-  if (materialType !== "snow") return;
+  if (materialType !== MATERIAL_TYPE.SNOW) return;
 
   const minDistance = PARTICLE_RADIUS * 2;
   const minDistanceSq = minDistance * minDistance;

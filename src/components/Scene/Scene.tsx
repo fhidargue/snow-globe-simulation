@@ -3,8 +3,8 @@ import { useEffect, useRef } from "react";
 
 import * as THREE from "three";
 
-import SnowParticles from "../SnowParticles/SnowParticles";
-import GlobeVisuals from "../Globe/GlobeVisuals";
+import SnowParticles from "@/components/SnowParticles/SnowParticles";
+import GlobeVisuals from "@/components/Globe/GlobeVisuals";
 
 import { useSimulationStore } from "@/hooks/simulationStore";
 

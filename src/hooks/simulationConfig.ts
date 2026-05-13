@@ -1,19 +1,20 @@
 import { create } from "zustand";
 import {
-  GRAVITY_VALUE,
+  VELOCITY_VALUE,
   NUM_PARTICLES,
   PARTICLE_SIZE,
+  MATERIAL_TYPE,
 } from "../utils/constants";
 
 interface SimulationConfigState {
-  gravity: number;
+  velocity: number;
   snowCount: number;
   particleSize: number;
   materialType: "snow" | "marble";
   showBackground: boolean;
   backgroundScene: string;
   showEllipsoids: boolean;
-  setGravity: (gravity: number) => void;
+  setVelocity: (velocity: number) => void;
   setSnowCount: (snowCount: number) => void;
   setParticleSize: (particleSize: number) => void;
   setMaterialType: (type: "snow" | "marble") => void;
@@ -23,15 +24,15 @@ interface SimulationConfigState {
 }
 
 export const useSimulationConfig = create<SimulationConfigState>((set) => ({
-  gravity: GRAVITY_VALUE,
+  velocity: VELOCITY_VALUE,
   snowCount: NUM_PARTICLES,
   particleSize: PARTICLE_SIZE,
-  materialType: "marble",
+  materialType: MATERIAL_TYPE.MARBLE as "marble",
   showBackground: true,
   backgroundScene: "/hdr/christmas_studio.hdr",
   showEllipsoids: false,
 
-  setGravity: (gravity) => set({ gravity }),
+  setVelocity: (velocity) => set({ velocity }),
   setSnowCount: (snowCount) =>
     set({
       snowCount,

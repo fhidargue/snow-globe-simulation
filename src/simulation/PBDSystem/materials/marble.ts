@@ -1,4 +1,4 @@
-import { PARTICLE_RADIUS } from "@/utils/constants";
+import { MATERIAL_TYPE, PARTICLE_RADIUS } from "@/utils/constants";
 
 import type { PBDSystem } from "@/simulation/PBDSystem/PBDSystem";
 import { NEIGHBOR_OFFSETS } from "@/utils/utils";
@@ -10,7 +10,7 @@ const PARTICLE_COLLISION_EPSILON = 0.0015;
 export function solveMarbleMaterial(system: PBDSystem) {
   const materialType = useSimulationConfig.getState().materialType;
 
-  if (materialType !== "marble") return;
+  if (materialType !== MATERIAL_TYPE.MARBLE) return;
 
   const minDistance = PARTICLE_RADIUS * 2;
   const minDistanceSq = minDistance * minDistance;

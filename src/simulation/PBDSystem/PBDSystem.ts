@@ -1,6 +1,10 @@
 import * as THREE from "three";
 
-import { GRID_CELL_SIZE, PARTICLE_RADIUS } from "@/utils/constants";
+import {
+  BASE_PARTICLE_SIZE,
+  GRID_CELL_SIZE,
+  PARTICLE_RADIUS,
+} from "@/utils/constants";
 
 import { useSimulationStore } from "@/hooks/simulationStore";
 import { useSimulationConfig } from "@/hooks/simulationConfig";
@@ -65,7 +69,7 @@ export class PBDSystem {
       this.previousPositions[index + 1]! = y;
       this.previousPositions[index + 2]! = z;
 
-      this.sizes[i]! = 0.018;
+      this.sizes[i]! = BASE_PARTICLE_SIZE;
     }
   }
 
@@ -142,12 +146,12 @@ export class PBDSystem {
     const { angularVelocityX, angularVelocityY, globeQuaternion } =
       useSimulationStore.getState();
 
-    const gravityStrength = useSimulationConfig.getState().gravity;
+    const velocityStrength = useSimulationConfig.getState().velocity;
 
     this.inverseQuaternion.copy(globeQuaternion).invert();
 
     this.gravityVector
-      .set(0, -gravityStrength, 0)
+      .set(0, -velocityStrength, 0)
       .applyQuaternion(this.inverseQuaternion);
 
     const gx = this.gravityVector.x - angularVelocityX * 26;
@@ -198,6 +202,12 @@ export class PBDSystem {
       this.positions[index]! = nextX;
       this.positions[index + 1]! = nextY;
       this.positions[index + 2]! = nextZ;
+    }
+  }
+
+  updateParticleSizes(particleScale: number) {
+    for (let i = 0; i < this.count; i++) {
+      this.sizes[i] = BASE_PARTICLE_SIZE * particleScale;
     }
   }
 }

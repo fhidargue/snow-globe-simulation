@@ -1,6 +1,6 @@
 import { Vector3 } from "three";
 
-export const GRAVITY_VALUE = 5;
+export const VELOCITY_VALUE = 5;
 export const GRAVITY = new Vector3(0, -2.5, 0);
 export const GLOBE_RADIUS = 2.35;
 export const PARTICLE_RADIUS = 0.03;
@@ -10,14 +10,26 @@ export const FLOOR_Y = -2.2;
 export const MOUSE_FORCE = 0.015;
 export const GRID_CELL_SIZE = 0.06;
 export const NUM_PARTICLES = 2000;
-export const PARTICLE_SIZE = 0.9;
+export const PARTICLE_SIZE = 1;
 export const STATIC_FRICTION_THRESHOLD = 0.00008;
 export const DYNAMIC_FRICTION = 0.9985;
 export const BOX_FRICTION = 0.92;
+export const BASE_PARTICLE_SIZE = 0.018;
+
+// ENUMS
+export const MATERIAL_TYPE = {
+  SNOW: "snow",
+  MARBLE: "marble",
+};
 
 // SCENE MODELS
 const TREE_BRANCH_COLOR = "#0d641a";
 const TREE_BALL_COLOR = "#5494f4";
+const TREE_SNOW_COLOR = "#D6E4F0";
+const GROUND_COLOR = "#B8C7D6";
+
+export const SNOW_COLOR = "#F4F8FC";
+export const MARBLE_COLOR = "#EEF4FA";
 
 export const CABIN = {
   model: "/assets/components/cabin.glb",
@@ -42,6 +54,7 @@ export const BASE = {
 };
 export const GROUND = {
   model: "/assets/components/ground.glb",
+  color: GROUND_COLOR,
   position: [0, -3.45, 0] as [number, number, number],
   rotation: [0, Math.PI, 0] as [number, number, number],
   scale: 20,
@@ -84,6 +97,7 @@ export const TREE_BALLS = {
 };
 export const TREE_SNOW = {
   model: "/assets/components/tree_snow.glb",
+  color: TREE_SNOW_COLOR,
   position: [0, -4, 0] as [number, number, number],
   rotation: [0, Math.PI, 0] as [number, number, number],
   scale: 25,

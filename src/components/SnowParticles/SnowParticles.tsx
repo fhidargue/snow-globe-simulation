@@ -1,17 +1,46 @@
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useEffect } from "react";
 
 import * as THREE from "three";
 
 import { PBDSystem } from "@/simulation/PBDSystem/PBDSystem";
+import { useSimulationConfig } from "@/hooks/simulationConfig";
+import { MARBLE_COLOR, MATERIAL_TYPE, SNOW_COLOR } from "@/utils/constants";
 
 const tempObject = new THREE.Object3D();
 
 export default function SnowParticles() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
+  const snowCount = useSimulationConfig((state) => state.snowCount);
+  const particleSize = useSimulationConfig((state) => state.particleSize);
+  const materialType = useSimulationConfig((state) => state.materialType);
+
   const simulation = useMemo(() => {
-    return new PBDSystem(2000);
-  }, []);
+    return new PBDSystem(snowCount);
+  }, [snowCount]);
+
+  const material =
+    materialType === MATERIAL_TYPE.SNOW ? (
+      <meshStandardMaterial
+        color={SNOW_COLOR}
+        roughness={0.92}
+        metalness={0}
+        envMapIntensity={0.15}
+      />
+    ) : (
+      <meshPhysicalMaterial
+        color={MARBLE_COLOR}
+        roughness={0.02}
+        metalness={0}
+        clearcoat={1}
+        clearcoatRoughness={0.02}
+        envMapIntensity={4}
+      />
+    );
+
+  useEffect(() => {
+    simulation.updateParticleSizes(particleSize);
+  }, [particleSize, simulation]);
 
   useFrame((_, delta) => {
     simulation.update(delta);
@@ -49,7 +78,7 @@ export default function SnowParticles() {
       receiveShadow
     >
       <sphereGeometry args={[2, 10, 10]} />
-      <meshStandardMaterial color="white" roughness={0.35} metalness={0.05} />
+      {material}
     </instancedMesh>
   );
 }

@@ -3,7 +3,7 @@ import { Environment } from "@react-three/drei";
 import { Suspense } from "react";
 import { Leva } from "leva";
 import { useSimulationConfig } from "@/hooks/simulationConfig";
-import Scene from "@/rendering/Scene/Scene";
+import Scene from "@/components/Scene/Scene";
 import ControlsPanel from "@/components/ControlPanel/ControlPanel";
 import FPSCounter from "@/components/FPSCounter/FPSCounter";
 
