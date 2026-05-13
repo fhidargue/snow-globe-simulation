@@ -160,3 +160,15 @@ export const solveBoxCollision = (
     pz,
   };
 };
+
+// COLLISION NEIGHBOR OFFSETS
+
+export const NEIGHBOR_OFFSETS: number[][] = [];
+
+for (let x = -1; x <= 1; x++) {
+  for (let y = -1; y <= 1; y++) {
+    for (let z = -1; z <= 1; z++) {
+      NEIGHBOR_OFFSETS.push([x, y, z]);
+    }
+  }
+}
