@@ -63,7 +63,7 @@ export default function ControlsPanel() {
       label: "Snow Count",
       value: snowCount,
       min: 100,
-      max: 18000,
+      max: 20000,
       step: 100,
     },
 
