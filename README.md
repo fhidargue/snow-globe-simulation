@@ -11,6 +11,10 @@ This project consists in a real-time interactive snow globe simulation inspired 
 
 This project investigates how physical particle systems can be used to approximate snow-like behavior in an interactive computer graphics environment while maintaining real-time performance.
 
+# Live Demo
+
+For a real-time simulation demo, please visit: https://snow-globe-simulation.vercel.app/
+
 # Technologies Used
 
 - TypeScript
