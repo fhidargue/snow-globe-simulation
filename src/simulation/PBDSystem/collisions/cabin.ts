@@ -1,9 +1,9 @@
 import * as THREE from "three";
 
-import type { PBDSystem } from "../PBDSystem";
-
 import { CABIN_COLLIDERS } from "@/utils/constants";
 import { applyVelocityFriction, solveBoxCollision } from "@/utils/utils";
+
+import type { PBDSystem } from "../PBDSystem";
 
 const CABIN_BOXES = CABIN_COLLIDERS.map((collider) => ({
   center: new THREE.Vector3(

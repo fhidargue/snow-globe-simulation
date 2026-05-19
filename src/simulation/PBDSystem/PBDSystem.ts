@@ -1,19 +1,18 @@
 import * as THREE from "three";
 
+import { useSimulationConfig } from "@/hooks/simulationConfig";
+import { useSimulationStore } from "@/hooks/simulationStore";
+import { solveCabinCollisions } from "@/simulation/PBDSystem/collisions/cabin";
+import { solveGlobeCollision } from "@/simulation/PBDSystem/collisions/globe";
+import { solveGroundCollision } from "@/simulation/PBDSystem/collisions/ground";
+import { solveTreeCollisions } from "@/simulation/PBDSystem/collisions/trees";
+import { solveMarbleMaterial } from "@/simulation/PBDSystem/materials/marble";
+import { solveSnowMaterial } from "@/simulation/PBDSystem/materials/snow";
 import {
   BASE_PARTICLE_SIZE,
   GRID_CELL_SIZE,
   PARTICLE_RADIUS,
 } from "@/utils/constants";
-
-import { useSimulationStore } from "@/hooks/simulationStore";
-import { useSimulationConfig } from "@/hooks/simulationConfig";
-import { solveSnowMaterial } from "@/simulation/PBDSystem/materials/snow";
-import { solveMarbleMaterial } from "@/simulation/PBDSystem/materials/marble";
-import { solveGlobeCollision } from "@/simulation/PBDSystem/collisions/globe";
-import { solveCabinCollisions } from "@/simulation/PBDSystem/collisions/cabin";
-import { solveTreeCollisions } from "@/simulation/PBDSystem/collisions/trees";
-import { solveGroundCollision } from "@/simulation/PBDSystem/collisions/ground";
 
 const SUBSTEPS = 1;
 const SOLVER_ITERATIONS = 1;

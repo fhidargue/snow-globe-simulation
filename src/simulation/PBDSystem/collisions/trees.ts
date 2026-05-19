@@ -1,11 +1,13 @@
 import * as THREE from "three";
+
 import { LEFT_TREE, RIGHT_TREE } from "@/utils/constants";
-import type { PBDSystem } from "../PBDSystem";
 import {
   applyVelocityFriction,
   solveBoxCollision,
   solveVerticalCylinderCollision,
 } from "@/utils/utils";
+
+import type { PBDSystem } from "../PBDSystem";
 
 const TREES = [LEFT_TREE, RIGHT_TREE];
 

@@ -1,14 +1,26 @@
-import { Canvas } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
-import { Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
 import { Leva } from "leva";
-import { useSimulationConfig } from "@/hooks/simulationConfig";
-import Scene from "@/components/Scene/Scene";
+import { Suspense } from "react";
+
 import ControlsPanel from "@/components/ControlPanel/ControlPanel";
 import FPSCounter from "@/components/FPSCounter/FPSCounter";
+import Scene from "@/components/Scene/Scene";
+import { useSimulationConfig } from "@/hooks/simulationConfig";
 
-const ColorBackground = () => <color attach="background" args={["#050816"]} />;
-const Fog = () => <fog attach="fog" args={["#050816", 12, 35]} />;
+const CONTROLS = {
+  ROOT_WIDTH: "400px",
+  ROOT_STYLES: "16px",
+  NUMBER_WIDTH: "60px",
+  CONTROL_WIDTH: "180px",
+  ROW_HEIGHT: "38px",
+};
+const BACKGROUND_COLOR = "#050816";
+
+const ColorBackground = () => (
+  <color attach="background" args={[BACKGROUND_COLOR]} />
+);
+const Fog = () => <fog attach="fog" args={[BACKGROUND_COLOR, 12, 35]} />;
 const Lighting = () => {
   return (
     <>
@@ -24,13 +36,13 @@ const LevaControls = () => {
         collapsed={false}
         theme={{
           sizes: {
-            rootWidth: "400px",
-            numberInputMinWidth: "60px",
-            controlWidth: "180px",
-            rowHeight: "38px",
+            rootWidth: CONTROLS.ROOT_WIDTH,
+            numberInputMinWidth: CONTROLS.NUMBER_WIDTH,
+            controlWidth: CONTROLS.CONTROL_WIDTH,
+            rowHeight: CONTROLS.ROW_HEIGHT,
           },
           fontSizes: {
-            root: "16px",
+            root: CONTROLS.ROOT_STYLES,
           },
         }}
       />

@@ -1,6 +1,5 @@
-import { LEFT_TREE, RIGHT_TREE } from "@/utils/constants";
-
 import type { TreeData } from "@/utils/constants";
+import { LEFT_TREE, RIGHT_TREE } from "@/utils/constants";
 
 const TREE_BOX = [0.7, 0.7, 0.7] as [number, number, number];
 

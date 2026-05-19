@@ -1,8 +1,7 @@
-import { MATERIAL_TYPE, PARTICLE_RADIUS } from "@/utils/constants";
-
-import type { PBDSystem } from "@/simulation/PBDSystem/PBDSystem";
-import { NEIGHBOR_OFFSETS } from "@/utils/utils";
 import { useSimulationConfig } from "@/hooks/simulationConfig";
+import type { PBDSystem } from "@/simulation/PBDSystem/PBDSystem";
+import { MATERIAL_TYPE, PARTICLE_RADIUS } from "@/utils/constants";
+import { NEIGHBOR_OFFSETS } from "@/utils/utils";
 
 const PARTICLE_STIFFNESS = 0.18;
 const PARTICLE_COLLISION_EPSILON = 0.0015;

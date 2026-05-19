@@ -1,6 +1,5 @@
-import { CABIN_COLLIDERS } from "@/utils/constants";
-
 import type { CollisionBox } from "@/utils/constants";
+import { CABIN_COLLIDERS } from "@/utils/constants";
 
 const CABIN_BOX = [0.72, 0.72, 0.72] as [number, number, number];
 

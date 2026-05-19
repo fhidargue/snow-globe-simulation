@@ -1,10 +1,11 @@
 import { create } from "zustand";
+
 import {
-  VELOCITY_VALUE,
-  NUM_PARTICLES,
-  PARTICLE_SIZE,
   MATERIAL_TYPE,
   MOUSE_SENSITIVITY,
+  NUM_PARTICLES,
+  PARTICLE_SIZE,
+  VELOCITY_VALUE,
 } from "@/utils/constants";
 
 interface SimulationConfigState {

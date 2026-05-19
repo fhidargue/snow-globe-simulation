@@ -1,5 +1,6 @@
 import { useControls } from "leva";
 import { useEffect } from "react";
+
 import { useSimulationConfig } from "@/hooks/simulationConfig";
 import { MATERIAL_TYPE } from "@/utils/constants";
 

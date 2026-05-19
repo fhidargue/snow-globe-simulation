@@ -1,8 +1,6 @@
-import * as THREE from "three";
-
-import { useEffect, useMemo } from "react";
-
 import { useGLTF, useTexture } from "@react-three/drei";
+import { useEffect, useMemo } from "react";
+import * as THREE from "three";
 
 const EMPTY_TEXTURE = "/assets/textures/empty.jpg";
 

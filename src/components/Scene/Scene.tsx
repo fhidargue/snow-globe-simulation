@@ -1,13 +1,11 @@
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-
 import * as THREE from "three";
 
-import SnowParticles from "@/components/SnowParticles/SnowParticles";
 import GlobeVisuals from "@/components/Globe/GlobeVisuals";
-
-import { useSimulationStore } from "@/hooks/simulationStore";
+import SnowParticles from "@/components/SnowParticles/SnowParticles";
 import { useSimulationConfig } from "@/hooks/simulationConfig";
+import { useSimulationStore } from "@/hooks/simulationStore";
 
 const DRAG_SENSITIVITY = 0.0032;
 const MAX_ANGULAR_VELOCITY = 0.11;

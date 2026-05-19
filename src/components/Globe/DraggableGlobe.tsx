@@ -1,6 +1,7 @@
-import { useFrame, type ThreeEvent } from "@react-three/fiber";
+import { type ThreeEvent,useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import * as THREE from "three";
+
 import GlobeScene from "./GlobeScene";
 
 export default function DraggableGlobe() {

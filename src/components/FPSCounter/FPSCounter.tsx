@@ -1,5 +1,6 @@
-import { Perf } from "r3f-perf";
 import "./FPSCounter.scss";
+
+import { Perf } from "r3f-perf";
 
 export default function FPSCounter() {
   return (

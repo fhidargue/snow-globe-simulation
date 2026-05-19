@@ -1,6 +1,5 @@
-import { create } from "zustand";
-
 import * as THREE from "three";
+import { create } from "zustand";
 
 interface SimulationState {
   angularVelocityX: number;

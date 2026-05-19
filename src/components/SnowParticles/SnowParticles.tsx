@@ -1,10 +1,9 @@
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef, useEffect } from "react";
-
+import { useEffect,useMemo, useRef } from "react";
 import * as THREE from "three";
 
-import { PBDSystem } from "@/simulation/PBDSystem/PBDSystem";
 import { useSimulationConfig } from "@/hooks/simulationConfig";
+import { PBDSystem } from "@/simulation/PBDSystem/PBDSystem";
 import { MARBLE_COLOR, MATERIAL_TYPE, SNOW_COLOR } from "@/utils/constants";
 
 const tempObject = new THREE.Object3D();
