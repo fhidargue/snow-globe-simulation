@@ -52,16 +52,8 @@ export default function ControlsPanel() {
       step: 1,
     },
 
-    velocity: {
-      label: "Velocity",
-      value: velocity,
-      min: 0,
-      max: 20,
-      step: 1,
-    },
-
     snowCount: {
-      label: "Snow Count",
+      label: "Particle Count",
       value: snowCount,
       min: 100,
       max: 20000,
@@ -76,8 +68,16 @@ export default function ControlsPanel() {
       step: 0.1,
     },
 
+    velocity: {
+      label: "Particle Velocity",
+      value: velocity,
+      min: 0,
+      max: 20,
+      step: 1,
+    },
+
     materialType: {
-      label: "Material Type",
+      label: "Particle Type",
       value: materialType,
       options: {
         Marbles: MATERIAL_TYPE.MARBLE,
@@ -86,7 +86,7 @@ export default function ControlsPanel() {
     },
 
     backgroundScene: {
-      label: "Scene",
+      label: "Scene Selection",
       value: backgroundScene,
       options: {
         "Christmas Studio": "/hdr/christmas_studio.hdr",

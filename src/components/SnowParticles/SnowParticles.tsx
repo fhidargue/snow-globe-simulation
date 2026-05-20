@@ -1,5 +1,5 @@
 import { useFrame } from "@react-three/fiber";
-import { useEffect,useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { useSimulationConfig } from "@/hooks/simulationConfig";
@@ -9,11 +9,18 @@ import { MARBLE_COLOR, MATERIAL_TYPE, SNOW_COLOR } from "@/utils/constants";
 const tempObject = new THREE.Object3D();
 
 export default function SnowParticles() {
+  const PARTICLE_RADIUS = 2;
+  const PARTICLE_SEGMENTS = 10;
+
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const snowCount = useSimulationConfig((state) => state.snowCount);
   const particleSize = useSimulationConfig((state) => state.particleSize);
   const materialType = useSimulationConfig((state) => state.materialType);
 
+  /**
+   * Create the particle simulation system.
+   * Recreated only when particle count changes.
+   */
   const simulation = useMemo(() => {
     return new PBDSystem(snowCount);
   }, [snowCount]);
@@ -37,6 +44,9 @@ export default function SnowParticles() {
       />
     );
 
+  /**
+   * Update particle sizes when configuration changes.
+   */  
   useEffect(() => {
     simulation.updateParticleSizes(particleSize);
   }, [particleSize, simulation]);
@@ -47,6 +57,10 @@ export default function SnowParticles() {
     const positions = simulation.positions;
     const sizes = simulation.sizes;
 
+    /**
+     * Update position and scale transforms
+     * for every particle instance before rendering.
+     */
     for (let i = 0; i < simulation.count; i++) {
       const index = i * 3;
 
@@ -64,6 +78,9 @@ export default function SnowParticles() {
       meshRef.current?.setMatrixAt(i, tempObject.matrix);
     }
 
+    /**
+     * Notify Three.js that instance matrices changed.
+     */
     if (meshRef.current) {
       meshRef.current.instanceMatrix.needsUpdate = true;
     }
@@ -76,7 +93,7 @@ export default function SnowParticles() {
       castShadow
       receiveShadow
     >
-      <sphereGeometry args={[2, 10, 10]} />
+      <sphereGeometry args={[PARTICLE_RADIUS, PARTICLE_SEGMENTS, PARTICLE_SEGMENTS]} />
       {material}
     </instancedMesh>
   );
