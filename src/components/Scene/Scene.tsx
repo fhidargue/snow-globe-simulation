@@ -7,93 +7,129 @@ import SnowParticles from "@/components/SnowParticles/SnowParticles";
 import { useSimulationConfig } from "@/hooks/simulationConfig";
 import { useSimulationStore } from "@/hooks/simulationStore";
 
-const DRAG_SENSITIVITY = 0.0032;
-const MAX_ANGULAR_VELOCITY = 0.11;
 
 export default function Scene() {
+  const DRAG_SENSITIVITY = 0.0032;
+  const MAX_ANGULAR_VELOCITY = 0.11;
+  const INERTIA_LERP_FACTOR = 0.12;
+  const ROTATION_DAMPING = 0.92;
+  const MIN_ANGULAR_VELOCITY = 0.000001;
+
   const groupRef = useRef<THREE.Group>(null);
   const dragging = useRef(false);
-  const lastMouse = useRef({
+  const lastMousePosition = useRef({
     x: 0,
     y: 0,
   });
 
+  /**
+   * Current angular velocity applied to the globe.
+   */
   const angularVelocity = useRef(new THREE.Vector2());
+
+  /**
+   * Target angular velocity generated from mouse movement.
+   * Used to create smoother rotational inertia.
+   */
   const targetVelocity = useRef(new THREE.Vector2());
 
   const mouseSensitivity = useSimulationConfig(
     (state) => state.mouseSensitivity,
   );
 
+  /**
+   * Final drag sensitivity applied during interaction.
+   */
   const dragSensitivity = DRAG_SENSITIVITY * mouseSensitivity;
 
+  /**
+   * Store current angular velocity and globe rotation
+   * globally so other systems can access globe motion data.
+   */
   const setAngularVelocity = useSimulationStore(
     (state) => state.setAngularVelocity,
   );
-
   const setGlobeQuaternion = useSimulationStore(
     (state) => state.setGlobeQuaternion,
   );
 
   useEffect(() => {
-    const handlePointerDown = (e: PointerEvent) => {
+    const handleMouseDown = (e: PointerEvent) => {
       dragging.current = true;
 
-      lastMouse.current = {
+      lastMousePosition.current = {
         x: e.clientX,
         y: e.clientY,
       };
     };
 
-    const handlePointerUp = () => {
+    const handleMouseUp = () => {
       dragging.current = false;
     };
 
-    const handlePointerMove = (e: PointerEvent) => {
+    /**
+     * Converts mouse movement into target angular velocity.
+     */
+    const handleMouseMove = (e: PointerEvent) => {
       if (!dragging.current) return;
 
-      const deltaX = e.clientX - lastMouse.current.x;
-      const deltaY = e.clientY - lastMouse.current.y;
+      const deltaX = e.clientX - lastMousePosition.current.x;
+      const deltaY = e.clientY - lastMousePosition.current.y;
 
-      // Natural drag feel
+      // Apply drag sensitivity
       targetVelocity.current.x = deltaX * dragSensitivity;
       targetVelocity.current.y = -deltaY * dragSensitivity;
 
-      // Prevent extreme spinning
+      // Prevent excessive spinning speeds by setting a max velocity
       targetVelocity.current.clampLength(0, MAX_ANGULAR_VELOCITY);
 
-      lastMouse.current = {
+      lastMousePosition.current = {
         x: e.clientX,
         y: e.clientY,
       };
     };
 
-    window.addEventListener("pointerdown", handlePointerDown);
-    window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointermove", handlePointerMove);
+    /**
+     * Global pointer listeners allow dragging even when the cursor 
+     * leaves the canvas area.
+     */
+    window.addEventListener("pointerdown", handleMouseDown);
+    window.addEventListener("pointerup", handleMouseUp);
+    window.addEventListener("pointermove", handleMouseMove);
 
     return () => {
-      window.removeEventListener("pointerdown", handlePointerDown);
-      window.removeEventListener("pointerup", handlePointerUp);
-      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerdown", handleMouseDown);
+      window.removeEventListener("pointerup", handleMouseUp);
+      window.removeEventListener("pointermove", handleMouseMove);
     };
   }, []); // eslint-disable-line
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
 
-    // Smooth inertia
-    angularVelocity.current.lerp(targetVelocity.current, 0.12);
+    /**
+     * Smoothly interpolate toward target velocity to create 
+     * inertia-based movement.
+     */
+    angularVelocity.current.lerp(targetVelocity.current, INERTIA_LERP_FACTOR);
 
-    // Framerate-independent damping
-    const damping = Math.pow(0.92, delta * 60);
+    /**
+     * Framerate-independent damping keeps motion
+     * consistent across different framerates.
+     */
+    const damping = Math.pow(ROTATION_DAMPING, delta * 60);
 
     targetVelocity.current.multiplyScalar(damping);
 
+    // Store current simulation rotation state
     setAngularVelocity(angularVelocity.current.x, angularVelocity.current.y);
     setGlobeQuaternion(groupRef.current.quaternion);
 
-    // Local rotation axes
+    /**
+     * Local rotation axes are updated using
+     * the globe's current quaternion rotation.
+     */
+
     const localXAxis = new THREE.Vector3(1, 0, 0);
     const localYAxis = new THREE.Vector3(0, 1, 0);
 
@@ -106,14 +142,17 @@ export default function Scene() {
     qx.setFromAxisAngle(localXAxis, angularVelocity.current.y);
     qy.setFromAxisAngle(localYAxis, angularVelocity.current.x);
 
-    // Apply local-space rotation
+    // Apply local-space quaternion rotation.
     groupRef.current.quaternion.multiply(qx);
     groupRef.current.quaternion.multiply(qy);
 
     angularVelocity.current.multiplyScalar(damping);
 
-    // Remove micro jitter
-    if (angularVelocity.current.lengthSq() < 0.000001) {
+    /**
+     * Remove extremely small rotational movement
+     * to prevent visible micro jittering.
+     */
+    if (angularVelocity.current.lengthSq() < MIN_ANGULAR_VELOCITY) {
       angularVelocity.current.set(0, 0);
     }
   });
