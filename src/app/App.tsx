@@ -65,8 +65,8 @@ export default function App() {
           fov: 45,
         }}
         gl={{
-          antialias: true,
           powerPreference: "high-performance",
+          antialias: true,
         }}
         dpr={[1, 1.5]}
       >
