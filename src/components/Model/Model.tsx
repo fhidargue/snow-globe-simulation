@@ -39,6 +39,10 @@ export default function Model({
     metalnessMap: texturePaths?.metalnessMap || EMPTY_TEXTURE,
   });
 
+  /**
+   * Clone textures to avoid modifying shared texture instances.
+   * flipY is disabled to match GLTF UV coordinates.
+   */
   const textures = useMemo(() => {
     if (!texturePaths) return null;
 
@@ -59,6 +63,10 @@ export default function Model({
     return cloned;
   }, [loadedTextures, texturePaths]);
 
+  /**
+   * Apply PBR materials and shadow settings
+   * to all meshes inside the GLTF scene.
+   */
   useEffect(() => {
     gltf.scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
