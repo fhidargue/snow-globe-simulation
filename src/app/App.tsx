@@ -66,7 +66,9 @@ export default function App() {
         }}
         gl={{
           antialias: true,
+          powerPreference: "high-performance",
         }}
+        dpr={[1, 1.5]}
       >
         <FPSCounter />
         <ColorBackground />
