@@ -7,163 +7,94 @@
 ![GPU Instancing](https://img.shields.io/badge/GPU%20Instancing-enabled-brightgreen)
 ![Physically Based Rendering](https://img.shields.io/badge/PBR-enabled-brightgreen)
 
-This project consists in a real-time interactive snow globe simulation inspired by Position Based Dynamics (PBD), granular material behavior, and particle-based snow simulation research.
+![Snow Globe Demo](./src/assets/videos/snow-demo.gif)
 
-This project investigates how physical particle systems can be used to approximate snow-like behavior in an interactive computer graphics environment while maintaining real-time performance.
+A real-time interactive particle simulation built using Position Based Dynamics (PBD), Verlet Integration, spatial hashing, collision handling, and GPU instanced rendering.
 
-# Live Demo
+The project explores how particle-based techniques can approximate snow-like behaviour while maintaining stable real-time performance directly inside the browser.
+
+## Live Demo
 
 For a real-time simulation demo, please visit: https://snow-globe-simulation.vercel.app/
 
-# Technologies Used
+## Problem
 
-- TypeScript
-- WebGL
-- Three.js
-- React Three Fiber
-- Zustand
-- Leva
-- SCSS Modules
-- Vite
-- GPU Instanced Rendering
-- Physically Based Rendering (PBR)
+Real-time particle simulations become computationally expensive as particle counts increase, especially when large numbers of particles must continuously interact and collide in dynamic environments.
 
-# Table of Contents
+This project investigates how Position Based Dynamics, spatial hashing, and particle-based techniques can be combined to create stable and visually convincing snow behaviour while maintaining interactive real-time performance inside a browser environment.
 
-1. [Installation](#1-installation)
-2. [Overview](#2-overview)
-3. [Technical Features](#3-technical-features)
-4. [Literature Review](#4-literature-review)
-5. [Mathematical Foundations](#5-mathematical-foundations)
-6. [Snow Material Investigation](#6-snow-material-investigation)
-7. [Real-Time Interaction](#7-real-time-interaction)
-8. [System Architecture](#8-system-architecture)
-9. [Limitations](#9-limitations)
-10. [Future Work](#10-future-work)
-11. [Conclusion](#11-conclusion)
-12. [References](#12-references)
+## Key Features
 
-# 1. Installation
-
-### 1.1 Requirements
-
-- Node.js
-- npm
-
-Installation guide on how to intall node in your computer: https://nodejs.org/en/download
-
-### 1.2 Clone the Repository
-
-```bash
-git clone <repository-url>
-cd <project-folder>
-```
-
-### 1.3 Install Dependencies
-
-```bash
-npm install
-```
-
-### 1.4 Start Development Server
-
-```bash
-npm run dev
-```
-
-# 2. Overview
-
-The simulation implements a custom particle based solver using `Position Based Dynamics (PBD)` principles combined with `Verlet integration`, `iterative collision constraints`, `spatial hashing`, and `material-specific behaviors`.
-
-The project focuses on:
-
-- Real-time particle simulation
-- Granular snow behavior approximation
-- Interactive globe manipulation
-- Collision handling with multiple collider types
-- Performance optimization for large particle counts
-- Physically-inspired material behavior
-- Real-time rendering using `Three.js` and `React Three Fiber`
-
-The system supports two different material modes:
-
-### 2.1 Marble Mode
-
-A rigid granular particle simulation where particles behave as independent colliding spheres.
-
-### 2.2 Snow Mode
-
-An approximation of granular snow behavior where neighboring particles exhibit increased friction and clustered movement to simulate snow accumulation and settling.
-
-# 3. Technical Features
-
-### 3.1 Simulation
-
-- Verlet Integration
 - Position Based Dynamics (PBD)
-- Iterative constraint solver
-- Dynamic collisions
-- Sleeping optimization system
-- Real-time interaction forces
+- Verlet Integration
+- Spatial Hashing Neighbor Search
+- Snow & Marble Material Behaviours
+- GPU Instanced Rendering
+- HDR & PBR Rendering
+- Interactive Globe Rotation
+- Typed Array Particle Storage
+- Framerate-Independent Damping
+- Browser-Based WebGL Simulation
 
-### 3.2 Optimization
+## System Architecture
 
-- Spatial hashing
-- Uniform grid neighbor search
-- Instanced rendering
-- Reduced allocations
-- Typed array storage
-- Constraint batching
-- Framerate-independent damping
+<div align="center">
+  <img
+    src="./src/assets/images/simulation_graph.png"
+    alt="Simulation Architecture"
+    width="400"
+  />
+</div>
 
-### 3.3 Rendering
+The simulation pipeline begins with user interaction and globe rotation, followed by particle updates using Verlet Integration. Spatial hashing accelerates neighbor searches, while the constraint solver handles particle interactions and applies either snow or marble behaviour. Collision systems keep particles inside the environment, and the final result is rendered using GPU instancing and physically based rendering techniques.
 
-- React Three Fiber
-- Three.js
-- HDR environment lighting
-- Dynamic materials
-- Instanced meshes
-- Interactive globe rotation
-- Physically based rendering (PBR)
+## Simulation Pipeline
 
-# 4. Literature Review
+```
+User Input
+    > Particle Integration (Verlet)
+        > Spatial Hashing
+            > Constraint Solving
+                > Collision Handling
+                    > Rendering
+```
 
-The project is heavily inspired by modern real-time simulation research in computer graphics.
+## Demo
 
-### 4.1 Position Based Dynamics
+<details>
+<summary>Snow Simulation</summary>
 
-Position Based Dynamics (`Müller et al.`) was selected as the primary simulation framework due to its:
+![Snow Simulation](./src/assets/videos/snow.gif)
 
-- Stability
-- Simplicity
-- Real-time performance
-- Robust collision handling
-- Interactive suitability
+</details>
 
-Unlike force-based approaches, PBD directly manipulates particle positions through iterative constraints.
+<details>
+<summary>Marble Simulation</summary>
 
-This allows stable real-time simulations even under large time steps.
+![Marble Simulation](./src/assets/videos/marbles.gif)
 
-### 4.2 Granular Snow Simulation
+</details>
 
-The project investigates concepts inspired by granular snow simulation research and adapts them into a real-time interactive particle system suitable for computer graphics applications.
+<details>
+<summary>Performance Testing (FPS)</summary>
 
-The implementation focuses on interactive performance and visual plausibility within a Position Based Dynamics framework.
+| Particle Count | FPS |
+|---|---|
+| 2,000 | 120 FPS |
+| 5,000 | 120 FPS |
+| 8,000 | 90 FPS |
+| 11,000 | 70 FPS |
+| 14,000 | 60 FPS |
+| 17,000 | 45 FPS |
+| 20,000 | 38 FPS |
 
-The resulting system reproduces several characteristic behaviors associated with granular snow materials, including:
+</details>
 
-- Increased neighbor friction
-- Clustered movement
-- Reduced tangential sliding
-- Granular accumulation and settling
+## Mathematical Foundations
 
-Rather than targeting fully physically-accurate snow deformation, the simulation prioritizes stability, responsiveness, and real-time interaction while maintaining visually convincing snow-like behavior.
+### Verlet Integration
 
-# 5. Mathematical Foundations
-
-### 5.1. Verlet Integration
-
-Particle motion is updated using Verlet integration.
+Particle movement is calculated using Verlet Integration, a technique commonly used in real-time particle simulations because of its stability and simplicity.
 
 The next particle position is computed using:
 
@@ -173,23 +104,18 @@ $$
 
 Where:
 
-- $x_t$ is the current position
-- $x_{t-\Delta t}$ is the previous position
+- $x_t$ is the current particle position
+- $x_{t-\Delta t}$ is the previous particle position
 - $a$ is acceleration
 - $\Delta t$ is the timestep
 
-Verlet integration was selected because:
+Instead of storing velocity directly, velocity is reconstructed from the difference between the current and previous positions. This approach works naturally with Position Based Dynamics and helps maintain smooth and stable particle motion during interaction.
 
-- Velocities are implicit
-- It is stable for particle systems
-- It integrates naturally with PBD constraints
-- It is widely used in real-time graphics applications
+### Position Based Dynamics (PBD) Constraints
 
-### 5.2 Position Based Dynamics (PBD) Constraints
+The simulation uses Position Based Dynamics to prevent particles from overlapping and to maintain stable interactions between neighboring particles.
 
-The simulation uses iterative positional corrections to resolve collisions.
-
-For particle-particle collision constraints:
+Particle collision constraints are represented using:
 
 $$
 C(p_i,p_j)=\|p_i-p_j\|-d
@@ -198,39 +124,46 @@ $$
 Where:
 
 - $p_i$ and $p_j$ are particle positions
-- $d$ is the minimum allowed distance
+- $d$ is the minimum allowed distance between particles
 
-Constraint corrections are iteratively applied using normalized collision directions.
+If two particles move too close together, the solver pushes them apart until the minimum distance is restored. These corrections are applied iteratively each frame, helping maintain stable particle separation while supporting large numbers of interacting particles.
 
-### 5.3 Spatial Hashing
+### Spatial Hashing
 
-To maintain real-time performance with thousands of interacting particles, the simulation implements spatial hashing for efficient neighbor searches.
+<div align="center">
+  <img
+    src="./src/assets/images/spatial-hashing.png"
+    alt="Spatial Hashing"
+  />
+</div>
 
-Naive particle collision detection requires every particle to be compared against every other particle, resulting in a time complexity of:
+To maintain real-time performance, the simulation uses spatial hashing to accelerate neighbor searches between particles.
+
+A naive collision system would compare every particle against every other particle, resulting in a complexity of:
 
 $$
 O(n^2)
 $$
 
-By partitioning the simulation space into discrete grid cells, collision queries become localized to nearby neighboring cells, reducing the average-case complexity to approximately:
+As particle counts increase, this quickly becomes too expensive for real-time simulation.
+
+To solve this, the simulation space is divided into grid cells so particles only search nearby regions instead of the entire system. This reduces the average-case complexity to approximately:
 
 $$
 O(n)
 $$
 
-Grid cell coordinates are computed using:
+Grid cell coordinates are calculated using:
 
 $$
 cell=\lfloor position/cellSize \rfloor
 $$
 
-This optimization significantly reduces the number of particle comparisons and was essential for supporting large particle counts while maintaining stable real-time performance.
+This optimization significantly reduces collision checks and was essential for supporting thousands of particles while maintaining interactive framerates.
 
-### 5.4 Collision System
+### Collision System
 
-The simulation implements multiple collision constraints to maintain stable particle interactions within the environment.
-
-Particle collisions are resolved using iterative positional corrections to prevent penetration and maintain minimum particle separation distances.
+The simulation implements multiple collision constraints to keep particles inside the environment and interacting correctly with scene objects.
 
 The globe boundary is represented using a spherical collision constraint:
 
@@ -238,137 +171,64 @@ $$
 x^2+y^2+z^2=r^2
 $$
 
-where $r$ defines the radius of the snow globe.
+Where:
 
-If a particle moves beyond this boundary, its position is projected back onto the sphere surface, preventing particles from escaping the globe volume while preserving stable collision behavior.
+- $r$ is the radius of the snow globe
 
-Additional collision primitives are used throughout the environment, including:
+If a particle moves outside the sphere, its position is projected back onto the globe surface, preventing particles from escaping the simulation volume.
 
-- Ellipsoid collisions for the ground surface
-- Box collisions for the cabin body, roof, and tree layers
+Additional collision primitives are also used throughout the environment, including:
+
+- Ellipsoid collisions for the snow ground
+- Box collisions for the cabin and tree layers
 - Cylinder collisions for tree trunks
 
-These collision systems collectively provide stable environmental interaction while maintaining real-time performance.
+These simplified collision shapes provide stable environmental interaction while remaining efficient enough for real-time simulation.
 
-# 6. Snow Material Investigation
+## Technology Stack
 
-One of the main research goals was approximating snow-like behavior using simplified particle interactions within a real-time `Position Based Dynamics` framework.
+- TypeScript
+- WebGL
+- Three.js
+- React Three Fiber
+- Zustand
+- Leva
+- SCSS
+- Vite
+- GPU Instanced Rendering
+- Physically Based Rendering (PBR)
 
-The final implementation reproduces several characteristic behaviors associated with granular snow materials, including:
+## Installation
 
-- Increased neighbor friction
-- Reduced tangential sliding
-- Clustered settling
-- Granular accumulation
+### Requirements
 
-Neighboring particles locally increase damping and friction, producing denser and more stable motion compared to the marble material mode.
+- Node.js
+- npm
 
-This approach prioritizes stability, responsiveness, and visually convincing snow-like behavior while maintaining real-time performance.
+Installation guide on how to intall node in your computer: https://nodejs.org/en/download
 
-# 7. Real-Time Interaction
+### Clone the Repository
 
-The globe can be rotated interactively using mouse drag input.
+```bash
+git clone <repository-url>
+cd <project-folder>
+```
 
-The interaction system includes:
+### Install Dependencies
 
-- Quaternion-based rotation
-- Inertial damping
-- Angular momentum approximation
-- Local axis rotation
-- Framerate-independent smoothing
+```bash
+npm install
+```
 
-This interaction directly influences particle acceleration by rotating the gravity vector into local globe space.
+### Start Development Server
 
-# 8. System Architecture
+```bash
+npm run dev
+```
 
-The project is structured into modular simulation components.
+## Future Extensions
 
-### 8.1 PBDSystem
-
-Core simulation system handling:
-
-- Integration
-- Collision solving
-- Spatial hashing
-- Particle updates
-
-### 8.2 Material Solvers
-
-Separate simulation logic for:
-
-- Marble behavior
-- Snow behavior
-
-### 8.3 Collision Modules
-
-Reusable collision utilities:
-
-- Sphere collisions
-- Box collisions
-- Cylinder collisions
-- Friction handling
-
-### 8.4 Rendering Layer
-
-Responsible for:
-
-- Particle instancing
-- Lighting
-- Materials
-- HDR environment
-- Scene rendering
-
-# 9. Limitations
-
-Although the simulation successfully approximates snow-like behavior, it is not a fully physically accurate snow simulation.
-
-The implementation does not include:
-
-- Material Point Method (MPM)
-- Stress tensor calculations
-- Elastic-plastic deformation
-- Volume preservation
-- Fracture mechanics
-- Thermodynamic snow behavior
-
-Instead, the project focuses on a simplified real-time approximation suitable for interactive graphics applications.
-
-# 10. Future Work
-
-Potential future improvements include:
-
-- GPU compute simulation
-- WebGPU implementation
-- MLS-MPM snow simulation
-- Particle deformation fields
-- Dynamic snow accumulation
-- Volumetric rendering
-- Fracture and compression systems
-- Fluid and phase-change simulation
-- Adaptive solver iterations
-
-# 11. Conclusion
-
-This project demonstrates how `Position Based Dynamics` can be adapted for interactive real-time particle simulation in computer animation.
-
-The final implementation successfully combines the following within a modular real-time graphics system:
-
-- Physically-inspired simulation
-- Collision handling
-- Optimization techniques
-- Interactive controls
-- Stylized rendering
-
-The project also highlights the challenges of approximating granular snow behavior using simplified particle constraints and demonstrates iterative experimentation through multiple simulation approaches.
-
-# 12. References
-
-- Clavet, S., Beaudoin, P., & Poulin, P. (2005). _Particle-based viscoelastic fluid simulation_. Proceedings of the 2005 ACM SIGGRAPH/Eurographics Symposium on Computer Animation. https://www.ligum.umontreal.ca/Clavet-2005-PVFS/pvfs.pdf
-
-- Macklin, M., Müller, M., Chentanez, N., & Kim, T.-Y. (2014). _Unified particle physics for real-time applications_. ACM Transactions on Graphics (TOG), 33(4). https://mmacklin.com/uppfrta_preprint.pdf
-
-- Macklin, M., & Müller, M. (2013). _Position based fluids_. ACM Transactions on Graphics (TOG), 32(4). https://mmacklin.com/pbf_sig_preprint.pdf
-
-- Müller, M., Heidelberger, B., Hennix, M., & Ratcliff, J. (2007). _Position based dynamics_. Journal of Visual Communication and Image Representation, 18(2), 109–118. https://matthias-research.github.io/pages/publications/posBasedDyn.pdf
-
-- Stomakhin, A., Schroeder, C., Chai, L., Teran, J., & Selle, A. (2013). _A material point method for snow simulation_. ACM Transactions on Graphics (TOG), 32(4). https://alexey.stomakhin.com/research/siggraph2013_snow.pdf
+- GPU-based simulation using WebGPU compute shaders
+- Material Point Method (MPM) snow simulation for more physically accurate deformation
+- Dynamic snow accumulation and compression systems
+- Volumetric rendering and advanced particle shading
