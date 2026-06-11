@@ -64,14 +64,14 @@ User Input
 <details>
 <summary>Snow Simulation</summary>
 
-![Snow Simulation](./src/assets/videos/snow.gif)
+![Snow Simulation](./src/assets/videos/snow-sim.gif)
 
 </details>
 
 <details>
 <summary>Marble Simulation</summary>
 
-![Marble Simulation](./src/assets/videos/marbles.gif)
+![Marble Simulation](./src/assets/videos/marble-sim.gif)
 
 </details>
 
